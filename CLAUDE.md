@@ -88,8 +88,9 @@ Run lint, typecheck and all tests before declaring a task done.
 
 ## Infrastructure
 
-- All Azure resources are defined in Bicep. Never create or change resources manually or via ad-hoc CLI commands.
+- All Azure resources are defined in Bicep. Never create or change resources manually or via ad-hoc CLI commands. The only exception is the temporary, always-removed CI migration firewall rule (ADR 0007).
 - Do not create or modify role assignments, federated credentials or Key Vault access without explicit approval.
+- Two Bicep layers (ADR 0007): `infra/bootstrap/` holds all identities, federated credentials, app registrations and role assignments and is deployed only by the owner; `infra/main/` is deployed by the pipeline and must contain no role assignments.
 
 ## Never
 
