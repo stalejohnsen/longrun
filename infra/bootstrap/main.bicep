@@ -11,6 +11,12 @@ param location string = 'swedencentral'
 @description('GitHub repository allowed to deploy, as owner/name.')
 param githubRepository string = 'stalejohnsen/longrun'
 
+@description('Immutable numeric ID of the repository owner (gh api repos/OWNER/REPO -q .owner.id).')
+param githubOwnerId string = '98233333'
+
+@description('Immutable numeric ID of the repository (gh api repos/OWNER/REPO -q .id).')
+param githubRepositoryId string = '1389214305'
+
 @description('GitHub environment the deploy job runs in; the only OIDC subject trusted.')
 param githubEnvironment string = 'production'
 
@@ -36,6 +42,8 @@ module resources 'resources.bicep' = {
   params: {
     location: location
     githubRepository: githubRepository
+    githubOwnerId: githubOwnerId
+    githubRepositoryId: githubRepositoryId
     githubEnvironment: githubEnvironment
     monthlyBudget: monthlyBudget
     budgetStartDate: budgetStartDate
