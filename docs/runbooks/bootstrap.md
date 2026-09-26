@@ -37,10 +37,20 @@ az account set --subscription <subscription-id>
 The pipeline only has `Contributor` on the resource group, so it cannot register providers.
 
 ```sh
-for ns in Microsoft.Web Microsoft.DBforPostgreSQL Microsoft.Insights Microsoft.OperationalInsights Microsoft.ManagedIdentity Microsoft.Consumption; do
+for ns in Microsoft.Web Microsoft.DBforPostgreSQL Microsoft.Insights Microsoft.OperationalInsights Microsoft.ManagedIdentity Microsoft.Consumption Microsoft.Network Microsoft.AlertsManagement; do
   az provider register --namespace "$ns"
 done
 ```
+
+Registration takes a few minutes. Wait until every provider reports `Registered` before the first deploy:
+
+```sh
+for ns in Microsoft.Web Microsoft.DBforPostgreSQL Microsoft.Insights Microsoft.OperationalInsights Microsoft.ManagedIdentity Microsoft.Consumption Microsoft.Network Microsoft.AlertsManagement; do
+  echo "$ns: $(az provider show --namespace "$ns" --query registrationState -o tsv)"
+done
+```
+
+`Microsoft.Network` is needed for the virtual network, private endpoint and private DNS zone (ADR 0007). `Microsoft.AlertsManagement` is needed for Application Insights' smart detection alert rules.
 
 ## 3. Preview the changes
 
