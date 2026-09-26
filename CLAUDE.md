@@ -13,11 +13,11 @@ Decided (changing any of these requires an ADR):
 - GitHub Actions with OIDC to Azure
 - Entra ID for user sign-in and for database access (managed identity, no passwords)
 - Next.js (App Router) with React, server-rendered first; client components only where a spec needs them (ADR 0001)
-
 - App Service built-in authentication for Entra ID sign-in, secretless via managed identity federated credential; the app still validates the identity header on every page, server action and route handler (ADR 0002)
+- Vitest for unit, component and integration tests (Testcontainers Postgres); Playwright end-to-end against a production build; no automatic retries (ADR 0003)
 
 Pending ADR (do not pick on your own; propose options with trade-offs in an ADR draft):
-- Test runner, database driver/query layer, migration tool, validation library
+- Database driver/query layer, migration tool, validation library
 
 ## Workflow
 - No code without a spec in `specs/`. If the spec is missing or unclear, stop and ask.

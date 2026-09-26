@@ -1,6 +1,6 @@
 # 0003 – Test runner and test levels
 
-Status: Proposed
+Status: Accepted
 Date: 2026-09-26
 
 ## Context
@@ -76,7 +76,7 @@ Facts checked on 2026-09-26:
 
 - Rejected because Playwright is already Next.js's optional peer dependency, covers several browsers from one API, and runs well headless in CI.
 
-## Decision (proposed)
+## Decision
 
 **A:** Vitest for unit, component and integration tests; Testcontainers for real Postgres; Playwright for end-to-end.
 

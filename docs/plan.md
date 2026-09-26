@@ -40,6 +40,7 @@ Engineers and team leads in one organisation who own systems and need to plan up
 | Infrastructure | Bicep |
 | CI/CD | GitHub Actions with OIDC to Azure |
 | Identity | Entra ID user sign-in via App Service built-in auth, secretless ([ADR 0002](adr/0002-authentication-mechanism.md)); managed identity for database access |
+| Testing | Vitest (unit, component, integration with Testcontainers Postgres), Playwright end-to-end ([ADR 0003](adr/0003-test-runner.md)) |
 
 End-of-support dates come from endoflife.date where available, with manual entry as the fallback. That data is treated as untrusted: validated, called with timeouts, and failures handled (the user can still enter a date manually).
 
@@ -47,10 +48,9 @@ End-of-support dates come from endoflife.date where available, with manual entry
 
 Each needs an ADR in `docs/adr/` with options and trade-offs before code depends on it:
 
-1. Test runner (must cover React components; see ADR 0001)
-2. Database driver / query layer
-3. Migration tool
-4. Validation library
+1. Database driver / query layer
+2. Migration tool
+3. Validation library
 
 ## Phases
 
