@@ -1,6 +1,6 @@
 # Spec 0001 – Component register and end-of-support view
 
-Status: Draft (open questions at the end must be answered before implementation)
+Status: Ready
 Date: 2026-09-26
 Related: [plan](../docs/plan.md), ADRs [0001](../docs/adr/0001-web-framework-and-rendering.md)–[0005](../docs/adr/0005-validation-library.md)
 
@@ -22,7 +22,7 @@ Signed-in users register technology components and see which ones reach end of s
 
 - Notifications, reminders, email.
 - Automatic discovery or import of components.
-- Scheduled background refresh of dates (see open question Q4).
+- Scheduled background refresh of dates (decision Q4).
 - Roles or per-owner permissions: any signed-in user may do everything.
 - History or audit trail of changes.
 - Search, sorting options or pagination beyond what is stated below.
@@ -45,7 +45,7 @@ A **component** has:
 
 The system also stores created and updated timestamps. It stores no personal data beyond the free-text owner name the user types in.
 
-"End-of-support date" means endoflife.date's `eolFrom` for the release (see open question Q1).
+"End-of-support date" means endoflife.date's `eolFrom` for the release (decision Q1).
 
 ## Behaviour
 
@@ -70,7 +70,7 @@ The system also stores created and updated timestamps. It stores no personal dat
 | 404 | The user is told the product or release was not found on endoflife.date and may correct it or enter a date manually. Nothing is saved until they resubmit. |
 | Timeout, network error, other status or invalid response | The user is told the lookup is unavailable and may enter a date manually or try again. The failure is logged without user-entered values. Nothing is saved until they resubmit. |
 
-- If the user enters a manual date **and** gives a product/release, the lookup result wins when it returns a date. The manual date is used only if the lookup finds no date (see open question Q3).
+- If the user enters a manual date **and** gives a product/release, the lookup result wins when it returns a date. The manual date is used only if the lookup finds no date (decision Q3).
 
 ### List
 
@@ -81,7 +81,7 @@ The system also stores created and updated timestamps. It stores no personal dat
 
 - The same form and rules as register, prefilled.
 - If the product or release changes, the lookup runs again on submit.
-- If neither changed, the stored date is kept unless the user asks to look it up again (see open question Q4).
+- If neither changed, the stored date is kept. The edit page has a "Look up again" button that re-runs the lookup for the current product and release, with the same outcomes as above (decision Q4).
 
 ### Delete
 
@@ -90,11 +90,11 @@ The system also stores created and updated timestamps. It stores no personal dat
 
 ### End-of-support view
 
-- The user chooses a window in whole months (see open question Q2 for the range and default).
+- The user chooses a window in whole months, from 1 to 36. The default is 12 (decision Q2).
 - The view shows components whose end-of-support date falls **from today up to and including today + window**, sorted by date ascending.
-- Components already past their end-of-support date are shown in a separate "Already unsupported" section above (see open question Q5).
+- Components already past their end-of-support date are shown in a separate "Already unsupported" section above (decision Q5).
 - Components with no date are not shown in this view. A count of them is shown with a link to the list.
-- "Today" is the current date in UTC (see open question Q6).
+- "Today" is the current date in UTC (decision Q6).
 - The chosen window is part of the URL (for example `?months=12`), so a view can be bookmarked or shared.
 
 ### Health endpoint
@@ -119,6 +119,7 @@ Each criterion gets at least one automated test (ADR 0003: unit, integration or 
 
 - **AC6** Editing any field and saving updates the component. *(e2e)*
 - **AC7** Changing the product or release triggers a new lookup and updates the date, source and lookup time. *(integration)*
+- **AC7a** "Look up again" on the edit page, with unchanged product and release, replaces the stored date when endoflife.date returns a different date, and updates the lookup time. On failure the stored date is kept. *(integration)*
 - **AC8** Deleting after confirmation removes the component from the list and from the end-of-support view. *(e2e)*
 
 ### End-of-support view
@@ -158,11 +159,11 @@ Each gets a test.
 - Pages render on the server. Client components only where needed for per-field error display (ADR 0001).
 - Accessibility: form fields have labels, errors are announced (`aria-live`), and the confirmation step is keyboard-accessible.
 
-## Open questions
+## Decisions
 
-Please answer or accept the proposed default for each.
+Resolved 2026-09-26 (proposed defaults accepted).
 
-| # | Question | Proposed default |
+| # | Question | Decision |
 | --- | --- | --- |
 | Q1 | Which endoflife.date field is "end of support"? `eolFrom` is the end of all support (security fixes) for most products. `eoasFrom` is the end of *active* support. | `eolFrom` |
 | Q2 | Allowed window range and default? | 1–36 months, default 12 |
@@ -170,5 +171,5 @@ Please answer or accept the proposed default for each.
 | Q4 | Should stored dates be refreshable? Vendors sometimes change dates. | A "Look up again" button on the edit page only. No background refresh in this spec. |
 | Q5 | Show already-unsupported components in the end-of-support view? | Yes, in a separate section above the window |
 | Q6 | Which time zone defines "today"? | UTC |
-| Q7 | How does the user enter the endoflife.date product and release: free text (validated by lookup), or pick from a list fetched from endoflife.date? | Free text with a link to endoflife.date for finding IDs. A picker is a later spec. |
+| Q7 | How does the user enter the endoflife.date product and release: free text (validated by lookup), or pick from a list fetched from endoflife.date? | Free text with a link to endoflife.date for finding IDs. A picker would be a later spec. |
 | Q8 | Are duplicate components (same name, version and where used) allowed? | Allowed; no uniqueness rule |
