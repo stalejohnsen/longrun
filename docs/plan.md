@@ -51,6 +51,7 @@ Each needs an ADR in `docs/adr/` with options and trade-offs before code depends
 3. Database driver / query layer
 4. Migration tool
 5. Validation library
+6. Authentication mechanism (App Service built-in auth vs. in-app OIDC library)
 
 ## Phases
 
