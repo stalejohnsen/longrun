@@ -22,3 +22,19 @@ var identityNames = {
 @export()
 @description('Audience for Entra workload identity federation.')
 var tokenExchangeAudience = 'api://AzureADTokenExchange'
+
+@export()
+@description('Globally unique, deterministic PostgreSQL Flexible Server name for a subscription.')
+func postgresServerName(subscriptionId string) string => 'psql-longrun-${uniqueString(subscriptionId, 'rg-longrun')}'
+
+@export()
+@description('Application database name.')
+var databaseName = 'longrun'
+
+@export()
+@description('Database login roles mapped to Entra identities (docs/runbooks/database-bootstrap.md).')
+var databaseRoles = {
+  migrator: 'longrun_migrator'
+  appProduction: 'longrun_app_production'
+  appStaging: 'longrun_app_staging'
+}

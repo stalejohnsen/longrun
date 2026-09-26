@@ -95,7 +95,7 @@ JSON
 gh api -X POST repos/stalejohnsen/longrun/environments/production/deployment-branch-policies -f name=main -f type=branch
 ```
 
-Set the **non-secret** identifiers as environment variables. Use variables, not secrets (spec 0002 D9):
+Set the **non-secret** identifiers as environment variables. Use variables, not secrets (spec 0002 D9). `POSTGRES_ADMIN_*` makes you the database's Entra administrator, for the database bootstrap only (ADR 0007):
 
 ```sh
 for pair in \
@@ -105,7 +105,7 @@ for pair in \
   WEB_APP_NAME=<webAppName> \
   AUTH_CLIENT_ID_PRODUCTION=<productionAuthClientId> \
   AUTH_CLIENT_ID_STAGING=<stagingAuthClientId> \
-  AUTH_AUDIENCE_STAGING=<stagingAuthAudience>; do
+  AUTH_AUDIENCE_STAGING=<stagingAuthAudience> \n  POSTGRES_ADMIN_OBJECT_ID="$(az ad signed-in-user show --query id -o tsv)" \n  POSTGRES_ADMIN_NAME="$(az ad signed-in-user show --query userPrincipalName -o tsv)"; do
   gh variable set "${pair%%=*}" --env production --body "${pair#*=}"
 done
 ```

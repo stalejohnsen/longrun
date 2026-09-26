@@ -88,7 +88,9 @@ GitHub-hosted runners have changing IP addresses. The migration job therefore:
 2. runs `scripts/migrate.ts` as `longrun_migrator`, authenticated with the pipeline identity's Entra token;
 3. **always** removes the rule, even on failure.
 
-This is a pipeline-automated, short-lived change outside Bicep. It is a **deliberate, documented exception** to `CLAUDE.md`'s "never change resources via ad-hoc CLI". It is scoped to one firewall rule named `ci-migration-<run id>`. The alternative is private networking with a runner inside Azure; it was rejected for now on cost and complexity. Revisit it if the app handles sensitive data.
+The owner uses the same pattern once, during the database bootstrap: a rule named `owner-bootstrap` for their own IP address, removed at the end of `docs/runbooks/database-bootstrap.md`.
+
+These are short-lived changes outside Bicep. It is a **deliberate, documented exception** to `CLAUDE.md`'s "never change resources via ad-hoc CLI". They are scoped to single firewall rules named `ci-migration-<run id>` and `owner-bootstrap`. The alternative is private networking with a runner inside Azure; it was rejected for now on cost and complexity. Revisit it if the app handles sensitive data.
 
 ### Staging verification through built-in auth
 
@@ -105,6 +107,10 @@ The owner, as Entra admin, creates these once by following `docs/runbooks/databa
 
 - `longrun_migrator`: the pipeline identity; owns the schema.
 - `longrun_app`: both slot identities; DML only.
+
+### Monitoring
+
+Application Insights is connected through App Service's agent (`ApplicationInsightsAgent_EXTENSION_VERSION=~3`). Node.js autoinstrumentation on Linux is **public preview** ([Monitor App Service](https://learn.microsoft.com/en-us/azure/app-service/monitor-app-service)). It needs no code or dependencies. Moving to code-based OpenTelemetry (GA) would need its own ADR, because it adds a dependency.
 
 ### Not now
 
