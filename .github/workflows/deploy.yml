@@ -31,7 +31,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # Spec 0002 D1: only commits whose CI succeeded are deployed.
+      # Spec 0002 D1: only commits whose CI succeeded are deployed. Waits for checks that are
+      # still running (for example when the deploy is started right after a merge).
       - name: Require green CI for this commit
         env:
           GH_TOKEN: ${{ github.token }}
@@ -40,11 +41,20 @@ jobs:
         run: |
           set -euo pipefail
           for check in verify infra; do
-            conclusion=$(gh api "repos/$REPOSITORY/commits/$SHA/check-runs?check_name=$check" -q '.check_runs[0].conclusion')
-            if [ "$conclusion" != "success" ]; then
-              echo "::error::CI check '$check' is '$conclusion' for $SHA"
+            for attempt in $(seq 1 90); do
+              state=$(gh api "repos/$REPOSITORY/commits/$SHA/check-runs?check_name=$check"                 -q '.check_runs[0] | "\(.status // "missing") \(.conclusion // "none")"')
+              read -r status conclusion <<<"$state"
+              if [ "$status" = "completed" ]; then
+                break
+              fi
+              echo "CI check '$check' is $status; waiting ($attempt/90)"
+              sleep 10
+            done
+            if [ "$status" != "completed" ] || [ "$conclusion" != "success" ]; then
+              echo "::error::CI check '$check' for $SHA: status=$status, conclusion=$conclusion. Deploy only commits with green CI."
               exit 1
             fi
+            echo "CI check '$check' succeeded"
           done
 
       - name: Set up Node
