@@ -58,3 +58,26 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  infra:
+    # Spec 0002 D2: build and lint all Bicep without Azure credentials (extension types are pulled from mcr.microsoft.com).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Bicep version
+        run: bicep --version
+
+      - name: Lint and build Bicep
+        run: |
+          set -euo pipefail
+          for file in infra/bootstrap/main.bicep; do
+            echo "::group::$file"
+            bicep lint "$file"
+            bicep build "$file" --stdout > /dev/null
+            echo "::endgroup::"
+          done
