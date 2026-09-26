@@ -75,7 +75,7 @@ jobs:
       - name: Lint and build Bicep
         run: |
           set -euo pipefail
-          for file in infra/bootstrap/main.bicep; do
+          for file in infra/bootstrap/main.bicep infra/main/main.bicep; do
             echo "::group::$file"
             bicep lint "$file"
             bicep build "$file" --stdout > /dev/null

@@ -4,8 +4,9 @@ import type { Config } from '../../src/lib/config'
 // Matches the Postgres major version used in docs/lifecycle.md.
 export const POSTGRES_IMAGE = 'postgres:17-alpine'
 
-export function startPostgres(): Promise<StartedPostgreSqlContainer> {
-  return new PostgreSqlContainer(POSTGRES_IMAGE).start()
+export function startPostgres(database?: string): Promise<StartedPostgreSqlContainer> {
+  const container = new PostgreSqlContainer(POSTGRES_IMAGE)
+  return (database ? container.withDatabase(database) : container).start()
 }
 
 export function databaseConfig(container: StartedPostgreSqlContainer): Config['database'] {
