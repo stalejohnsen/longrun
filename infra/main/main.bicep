@@ -28,6 +28,9 @@ param stagingAuthClientId string
 @description('Identifier URI of the staging app registration (bootstrap output).')
 param stagingAuthAudience string
 
+@description('Apply database firewall rules. The workflow sets this only when the web app outbound addresses differ from the existing rules; each rule takes about a minute even when unchanged.')
+param deployFirewallRules bool = true
+
 var tenantId = tenant().tenantId
 var appName = webAppName(subscription().subscriptionId)
 var serverName = postgresServerName(subscription().subscriptionId)
@@ -308,7 +311,7 @@ resource stagingAuth 'Microsoft.Web/sites/slots/config@2024-11-01' = {
 
 // --- Database firewall: the web app's outbound addresses (ADR 0007) ------------------------
 
-module firewall 'postgres-firewall.bicep' = {
+module firewall 'postgres-firewall.bicep' = if (deployFirewallRules) {
   name: 'longrun-postgres-firewall'
   params: {
     serverName: postgres.name

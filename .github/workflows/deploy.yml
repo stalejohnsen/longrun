@@ -119,6 +119,31 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
+      # Firewall rules take about a minute each, even when unchanged, so only apply them when
+      # the web app's outbound addresses differ from the existing rules (or nothing exists yet).
+      - name: Decide whether database firewall rules need updating
+        id: firewall_plan
+        run: |
+          set -euo pipefail
+          app=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[0].name" --output tsv)
+          server=$(az postgres flexible-server list --resource-group "$RESOURCE_GROUP" --query "[0].name" --output tsv 2>/dev/null || true)
+          if [ -z "$app" ] || [ -z "$server" ]; then
+            echo "No app or server yet; rules will be applied"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          wanted=$(az webapp show --resource-group "$RESOURCE_GROUP" --name "$app" \
+            --query possibleOutboundIpAddresses --output tsv | tr -d '\r' | tr ',' '\n' | grep -v ':' | sort -u)
+          existing=$(az postgres flexible-server firewall-rule list --resource-group "$RESOURCE_GROUP" --server-name "$server" \
+            --query "[?starts_with(name, 'app-outbound-')].startIpAddress" --output tsv | tr -d '\r' | sort -u)
+          if [ "$wanted" = "$existing" ]; then
+            echo "Firewall rules already match $(wc -l <<<"$wanted") outbound addresses; skipping"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Outbound addresses changed; rules will be applied"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Preview infrastructure changes
         run: |
           az deployment group what-if \
@@ -129,7 +154,8 @@ jobs:
               postgresAdminPrincipalName="${{ vars.POSTGRES_ADMIN_NAME }}" \
               productionAuthClientId="${{ vars.AUTH_CLIENT_ID_PRODUCTION }}" \
               stagingAuthClientId="${{ vars.AUTH_CLIENT_ID_STAGING }}" \
-              stagingAuthAudience="${{ vars.AUTH_AUDIENCE_STAGING }}"
+              stagingAuthAudience="${{ vars.AUTH_AUDIENCE_STAGING }}" \
+              deployFirewallRules=${{ steps.firewall_plan.outputs.deploy }}
 
       - name: Deploy infrastructure
         id: infra
@@ -145,6 +171,7 @@ jobs:
               productionAuthClientId="${{ vars.AUTH_CLIENT_ID_PRODUCTION }}" \
               stagingAuthClientId="${{ vars.AUTH_CLIENT_ID_STAGING }}" \
               stagingAuthAudience="${{ vars.AUTH_AUDIENCE_STAGING }}" \
+              deployFirewallRules=${{ steps.firewall_plan.outputs.deploy }} \
             --query properties.outputs --output json)
           {
             echo "web_app=$(jq -r .webAppName.value <<<"$outputs")"
@@ -165,8 +192,8 @@ jobs:
           ip=$(curl -fsS --max-time 10 https://api.ipify.org)
           az postgres flexible-server firewall-rule create \
             --resource-group "$RESOURCE_GROUP" \
-            --name "${{ steps.infra.outputs.postgres_server }}" \
-            --rule-name "ci-migration-$RUN_ID" \
+            --server-name "${{ steps.infra.outputs.postgres_server }}" \
+            --name "ci-migration-$RUN_ID" \
             --start-ip-address "$ip" --end-ip-address "$ip" --output none
           echo "created=true" >> "$GITHUB_OUTPUT"
 
@@ -189,8 +216,8 @@ jobs:
         run: |
           az postgres flexible-server firewall-rule delete \
             --resource-group "$RESOURCE_GROUP" \
-            --name "${{ steps.infra.outputs.postgres_server }}" \
-            --rule-name "ci-migration-$RUN_ID" --yes --output none
+            --server-name "${{ steps.infra.outputs.postgres_server }}" \
+            --name "ci-migration-$RUN_ID" --yes --output none
 
       # --- Staging ---------------------------------------------------------------------------
 

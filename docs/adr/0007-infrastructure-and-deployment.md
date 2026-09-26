@@ -66,6 +66,7 @@ Facts checked on 2026-09-26:
   - **Entra-only authentication**, with the owner as Entra admin for bootstrap only;
   - public access with firewall rules for the web app's outbound IP addresses;
   - no "allow all Azure services" rule.
+  - the rules are applied only when the web app's outbound addresses differ from the existing rules (`deployFirewallRules`). Each rule takes about a minute even when unchanged, so re-applying all 31 on every deploy added about 30 minutes.
 
 The pipeline never gets Microsoft Graph permissions or the right to assign roles. **Main contains no role assignments.**
 

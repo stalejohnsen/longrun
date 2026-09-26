@@ -16,8 +16,8 @@ The server only accepts the web app's outbound addresses (ADR 0007). Add a tempo
 ```sh
 SERVER=$(az postgres flexible-server list -g rg-longrun --query "[0].name" -o tsv)
 MYIP=$(curl -s https://api.ipify.org)
-az postgres flexible-server firewall-rule create -g rg-longrun -n "$SERVER" \
-  --rule-name owner-bootstrap --start-ip-address "$MYIP" --end-ip-address "$MYIP"
+az postgres flexible-server firewall-rule create -g rg-longrun --server-name "$SERVER" \
+  --name owner-bootstrap --start-ip-address "$MYIP" --end-ip-address "$MYIP"
 ```
 
 ## 2. Connect as Entra administrator
@@ -70,11 +70,11 @@ Expect `longrun_migrator`, `longrun_app_production` and `longrun_app_staging` as
 ## 5. Remove your firewall rule (always)
 
 ```sh
-az postgres flexible-server firewall-rule delete -g rg-longrun -n "$SERVER" --rule-name owner-bootstrap --yes
+az postgres flexible-server firewall-rule delete -g rg-longrun --server-name "$SERVER" --name owner-bootstrap --yes
 ```
 
 Confirm that only `app-outbound-*` rules remain:
 
 ```sh
-az postgres flexible-server firewall-rule list -g rg-longrun -n "$SERVER" --query "[].name" -o tsv
+az postgres flexible-server firewall-rule list -g rg-longrun --server-name "$SERVER" --query "[].name" -o tsv
 ```
