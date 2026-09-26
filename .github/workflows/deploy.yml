@@ -1,0 +1,267 @@
+name: Deploy
+
+# Spec 0002, ADR 0007. Started manually on `main` by the owner: that click is the approval
+# (GitHub has no environment reviewers for private repositories on this plan).
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'full = infra, migrations, staging, verify, swap. infra-only = first deployment before the database bootstrap.'
+        type: choice
+        options: [full, infra-only]
+        default: full
+
+permissions: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      checks: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Spec 0002 D1: only commits whose CI succeeded are deployed.
+      - name: Require green CI for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for check in verify infra; do
+            conclusion=$(gh api "repos/$REPOSITORY/commits/$SHA/check-runs?check_name=$check" -q '.check_runs[0].conclusion')
+            if [ "$conclusion" != "success" ]; then
+              echo "::error::CI check '$check' is '$conclusion' for $SHA"
+              exit 1
+            fi
+          done
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Spec 0002 D3: build once; the same artifact goes to staging and is swapped to production.
+      - name: Build standalone bundle
+        run: |
+          set -euo pipefail
+          npm run build
+          node scripts/prepare-standalone.mjs
+          (cd .next/standalone && zip -qr "$GITHUB_WORKSPACE/app.zip" .)
+        env:
+          DEPLOYMENT_ID: ${{ github.sha }}
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: app-${{ github.sha }}
+          path: app.zip
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # The only OIDC subject the pipeline identity trusts (infra/bootstrap).
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RESOURCE_GROUP: rg-longrun
+      SHA: ${{ github.sha }}
+      RUN_ID: ${{ github.run_id }}
+      FULL: ${{ inputs.mode == 'full' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies (migration runner)
+        run: npm ci
+
+      - name: Azure login (OIDC, no secrets)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Preview infrastructure changes
+        run: |
+          az deployment group what-if \
+            --resource-group "$RESOURCE_GROUP" \
+            --template-file infra/main/main.bicep \
+            --parameters \
+              postgresAdminObjectId="${{ vars.POSTGRES_ADMIN_OBJECT_ID }}" \
+              postgresAdminPrincipalName="${{ vars.POSTGRES_ADMIN_NAME }}" \
+              productionAuthClientId="${{ vars.AUTH_CLIENT_ID_PRODUCTION }}" \
+              stagingAuthClientId="${{ vars.AUTH_CLIENT_ID_STAGING }}" \
+              stagingAuthAudience="${{ vars.AUTH_AUDIENCE_STAGING }}"
+
+      - name: Deploy infrastructure
+        id: infra
+        run: |
+          set -euo pipefail
+          outputs=$(az deployment group create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "main-$RUN_ID" \
+            --template-file infra/main/main.bicep \
+            --parameters \
+              postgresAdminObjectId="${{ vars.POSTGRES_ADMIN_OBJECT_ID }}" \
+              postgresAdminPrincipalName="${{ vars.POSTGRES_ADMIN_NAME }}" \
+              productionAuthClientId="${{ vars.AUTH_CLIENT_ID_PRODUCTION }}" \
+              stagingAuthClientId="${{ vars.AUTH_CLIENT_ID_STAGING }}" \
+              stagingAuthAudience="${{ vars.AUTH_AUDIENCE_STAGING }}" \
+            --query properties.outputs --output json)
+          {
+            echo "web_app=$(jq -r .webAppName.value <<<"$outputs")"
+            echo "postgres_server=$(jq -r .postgresServerName.value <<<"$outputs")"
+            echo "postgres_host=$(jq -r .postgresHost.value <<<"$outputs")"
+            echo "database=$(jq -r .databaseName.value <<<"$outputs")"
+            echo "staging_host=$(jq -r .stagingHostName.value <<<"$outputs")"
+            echo "production_host=$(jq -r .productionHostName.value <<<"$outputs")"
+          } >> "$GITHUB_OUTPUT"
+
+      # --- Migrations (ADR 0007 exception: temporary, always-removed firewall rule) ---------
+
+      - name: Open database firewall for this runner
+        id: firewall
+        if: env.FULL == 'true'
+        run: |
+          set -euo pipefail
+          ip=$(curl -fsS --max-time 10 https://api.ipify.org)
+          az postgres flexible-server firewall-rule create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "${{ steps.infra.outputs.postgres_server }}" \
+            --rule-name "ci-migration-$RUN_ID" \
+            --start-ip-address "$ip" --end-ip-address "$ip" --output none
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      - name: Run migrations as longrun_migrator
+        if: env.FULL == 'true'
+        env:
+          DATABASE_HOST: ${{ steps.infra.outputs.postgres_host }}
+          DATABASE_NAME: ${{ steps.infra.outputs.database }}
+          DATABASE_USER: longrun_migrator
+          DATABASE_SSL: require
+        run: |
+          set -euo pipefail
+          # The pipeline identity's Entra token is the password for this short-lived process.
+          token=$(az account get-access-token --resource-type oss-rdbms --query accessToken --output tsv)
+          echo "::add-mask::$token"
+          DATABASE_PASSWORD="$token" node scripts/migrate.ts
+
+      - name: Close database firewall (always)
+        if: always() && steps.firewall.outputs.created == 'true'
+        run: |
+          az postgres flexible-server firewall-rule delete \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "${{ steps.infra.outputs.postgres_server }}" \
+            --rule-name "ci-migration-$RUN_ID" --yes --output none
+
+      # --- Staging ---------------------------------------------------------------------------
+
+      - name: Download bundle
+        if: env.FULL == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: app-${{ github.sha }}
+          path: artifact
+
+      - name: Deploy bundle to staging slot
+        if: env.FULL == 'true'
+        run: |
+          az webapp deploy \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "${{ steps.infra.outputs.web_app }}" \
+            --slot staging \
+            --src-path artifact/app.zip --type zip \
+            --async false --restart true
+
+      # Spec 0002 E3: wait up to 10 minutes for staging to serve this exact build.
+      - name: Wait for staging to serve this build
+        if: env.FULL == 'true'
+        env:
+          AUDIENCE: ${{ vars.AUTH_AUDIENCE_STAGING }}
+          HOST: ${{ steps.infra.outputs.staging_host }}
+        run: |
+          set -euo pipefail
+          TOKEN=$(az account get-access-token --scope "$AUDIENCE/.default" --query accessToken --output tsv)
+          echo "::add-mask::$TOKEN"
+          for attempt in $(seq 1 60); do
+            if curl -fsS --max-time 10 -H "Authorization: Bearer $TOKEN" "https://$HOST/" | grep -q "dpl=$SHA"; then
+              echo "Staging serves $SHA"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Staging did not serve $SHA within 10 minutes"
+          exit 1
+
+      # Spec 0002 D7: auth enforced, and app + database healthy, before the swap.
+      - name: Verify staging
+        if: env.FULL == 'true'
+        env:
+          AUDIENCE: ${{ vars.AUTH_AUDIENCE_STAGING }}
+          HOST: ${{ steps.infra.outputs.staging_host }}
+        run: |
+          set -euo pipefail
+          TOKEN=$(az account get-access-token --scope "$AUDIENCE/.default" --query accessToken --output tsv)
+          echo "::add-mask::$TOKEN"
+          read -r code location < <(curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' "https://$HOST/")
+          if [ "$code" != "302" ] || [[ "$location" != *"/.auth/login/aad"* ]]; then
+            echo "::error::Unauthenticated request was not redirected to sign-in (status $code)"
+            exit 1
+          fi
+          body=$(curl -fsS --max-time 10 -H "Authorization: Bearer $TOKEN" "https://$HOST/health")
+          if [ "$body" != '{"status":"ok"}' ]; then
+            echo "::error::Staging /health did not report ok"
+            exit 1
+          fi
+          echo "Staging verified"
+
+      # --- Production ------------------------------------------------------------------------
+
+      - name: Swap staging into production
+        if: env.FULL == 'true'
+        run: |
+          az webapp deployment slot swap \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "${{ steps.infra.outputs.web_app }}" \
+            --slot staging --target-slot production
+
+      - name: Verify production requires sign-in
+        if: env.FULL == 'true'
+        env:
+          HOST: ${{ steps.infra.outputs.production_host }}
+        run: |
+          set -euo pipefail
+          read -r code location < <(curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' "https://$HOST/")
+          if [ "$code" != "302" ] || [[ "$location" != *"/.auth/login/aad"* ]]; then
+            echo "::error::Production did not redirect to sign-in after the swap (status $code)"
+            exit 1
+          fi
+          echo "Production requires sign-in"

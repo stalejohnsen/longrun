@@ -71,7 +71,7 @@ The pipeline never gets Microsoft Graph permissions or the right to assign roles
 
 ### Deployment workflow (`.github/workflows/deploy.yml`)
 
-Runs after CI succeeds on `main`, in GitHub environment `production`, which requires the owner's approval:
+Started **manually** by the owner on `main` (`workflow_dispatch`); the manual start is the approval. It refuses commits whose CI didn't succeed and runs in GitHub environment `production`, the only OIDC subject trusted. _(Amended 2026-09-26: environment reviewers are not available for private repositories on the owner's GitHub plan, so the approval is the manual start.)_
 
 1. Build the standalone bundle once, with `DEPLOYMENT_ID` set to the commit SHA.
 2. Run `what-if` on `infra/main`, then deploy it.
@@ -122,5 +122,5 @@ Application Insights is connected through App Service's agent (`ApplicationInsig
 - Monthly cost is roughly $85 plus storage and log ingestion. The App Service plan is billed while it exists, even if the app is stopped.
 - The owner runs the bootstrap once. Re-running it is idempotent. Changes to bootstrap need the owner again, which is intended, because it holds all identity and role changes.
 - Non-secret identifiers go into GitHub **variables** of the `production` environment: tenant, subscription and pipeline client ID. There are no GitHub secrets.
-- The migration CLI must support a token from the runner's Azure login (not managed identity). This is a small change in `src/db/pool.ts` and config, made in the deploy-workflow PR.
+- The migration job passes the pipeline identity's short-lived Entra token as `DATABASE_PASSWORD` to `scripts/migrate.ts` on the runner (outside Azure, where config allows a password). No code change is needed; the token is masked in logs.
 - The three items left open in PR B are confirmed during the first deployment (runbook): the `WEBSITE_AUTH_ENABLED` value, the principal claim names, and the health-ping headers.
