@@ -31,15 +31,6 @@ resource pipelineIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024
   location: location
 }
 
-resource appProductionIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
-  name: identityNames.appProduction
-  location: location
-}
-
-resource appStagingIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
-  name: identityNames.appStaging
-  location: location
-}
 
 // GitHub Actions OIDC: only jobs in the given environment of this repository may sign in.
 resource githubFederatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2024-11-30' = {
@@ -55,22 +46,31 @@ resource githubFederatedCredential 'Microsoft.ManagedIdentity/userAssignedIdenti
 // --- App registrations for App Service built-in auth (ADR 0002) ------------------------
 // One per slot. Each trusts its slot's managed identity as credential: no client secret.
 
+// Static slot metadata; loops must be computable at deployment start.
 var slots = [
   {
     key: 'production'
+    identityName: identityNames.appProduction
     uniqueName: 'longrun-auth-production'
     displayName: 'Longrun (production)'
     host: '${appName}.${appHostSuffix}'
-    identityPrincipalId: appProductionIdentity.properties.principalId
     audience: 'api://${tenantId}/longrun-production'
   }
   {
     key: 'staging'
+    identityName: identityNames.appStaging
     uniqueName: 'longrun-auth-staging'
     displayName: 'Longrun (staging)'
     host: '${appName}-${stagingSlotName}.${appHostSuffix}'
-    identityPrincipalId: appStagingIdentity.properties.principalId
     audience: 'api://${tenantId}/longrun-staging'
+  }
+]
+
+// One identity per slot; managed identities are not swapped (ADR 0002).
+resource appIdentities 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = [
+  for slot in slots: {
+    name: slot.identityName
+    location: location
   }
 ]
 
@@ -100,7 +100,7 @@ resource authAppCredentials 'Microsoft.Graph/applications/federatedIdentityCrede
     description: 'Trust the ${slot.key} slot managed identity as the app credential'
     audiences: [tokenExchangeAudience]
     issuer: entraIssuer
-    subject: slot.identityPrincipalId
+    subject: appIdentities[i].properties.principalId
   }
 ]
 
@@ -124,7 +124,7 @@ resource pipelineContributor 'Microsoft.Authorization/roleAssignments@2022-04-01
 
 // --- Cost guardrail ---------------------------------------------------------------------
 
-resource budget 'Microsoft.Consumption/budgets@2024-08-01' = {
+resource budget 'Microsoft.Consumption/budgets@2026-06-01' = {
   name: 'budget-longrun-monthly'
   properties: {
     category: 'Cost'
