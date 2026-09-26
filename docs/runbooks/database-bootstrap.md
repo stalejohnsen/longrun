@@ -1,6 +1,8 @@
 # Database bootstrap (owner only)
 
-Creates the database login roles for the three managed identities and applies the least-privilege grants (ADR 0004, ADR 0007). Run this **once**, after the first successful infrastructure deployment (`infra/main`) and **before** the first migration.
+Creates the database login roles for the three managed identities and applies the least-privilege grants (ADR 0004, ADR 0007). Run this **once**, after the first **successful** `infra-only` deploy (check that the Deploy run is green, not just started) and **before** the first `full` deploy.
+
+Use a recent Azure CLI (`az upgrade`). Old versions (for example 2.52) fail on `flexible-server` commands with unhelpful errors such as `'NoneType' object has no attribute 'public_network_access'`.
 
 **Who:** the owner, who is the PostgreSQL Entra administrator (`postgresAdminObjectId` in `infra/main`).
 
@@ -15,6 +17,8 @@ The server only accepts the web app's outbound addresses (ADR 0007). Add a tempo
 
 ```sh
 SERVER=$(az postgres flexible-server list -g rg-longrun --query "[0].name" -o tsv)
+# Stop if the server does not exist yet (the infra-only deploy must have succeeded first).
+[ -n "$SERVER" ] || { echo "No PostgreSQL server in rg-longrun yet. Wait for the infra-only deploy to succeed."; exit 1; }
 MYIP=$(curl -s https://api.ipify.org)
 az postgres flexible-server firewall-rule create -g rg-longrun -n "$SERVER" \
   --rule-name owner-bootstrap --start-ip-address "$MYIP" --end-ip-address "$MYIP"
