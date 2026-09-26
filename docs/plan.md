@@ -67,9 +67,12 @@ Each phase is one or more small PRs. A phase with code starts with a spec in `sp
 
 ### Phase 2 – Infrastructure and deployment
 
-- Bicep for App Service, PostgreSQL Flexible Server, Key Vault, Application Insights.
-- GitHub Actions deployment with OIDC; deploy to staging slot, then swap.
-- Runbook in `docs/runbooks/` for first-time setup (federated credential, role assignments; these require explicit approval).
+Spec [0002](../specs/0002-deployment.md), ADR [0007](adr/0007-infrastructure-and-deployment.md). Four PRs:
+
+1. ADR 0007 and spec 0002.
+2. Bootstrap Bicep (owner-run) and runbooks: bootstrap, database roles.
+3. Main Bicep, with Bicep build and lint in CI.
+4. Deploy workflow (build → approval → infra → migrations → staging → verify → swap), migration token support, rollback and first-deployment runbooks.
 
 ### Phase 3 – Authentication
 
