@@ -40,15 +40,14 @@ Engineers and team leads in one organisation who own systems and need to plan up
 | Infrastructure | Bicep |
 | CI/CD | GitHub Actions with OIDC to Azure |
 | Identity | Entra ID user sign-in via App Service built-in auth, secretless ([ADR 0002](adr/0002-authentication-mechanism.md)); managed identity for database access |
+| Validation | Zod 4 at every boundary: forms, route handlers, identity header, config, endoflife.date ([ADR 0005](adr/0005-validation-library.md)) |
 | Testing | Vitest (unit, component, integration with Testcontainers Postgres), Playwright end-to-end ([ADR 0003](adr/0003-test-runner.md)) |
 
 End-of-support dates come from endoflife.date where available, with manual entry as the fallback. That data is treated as untrusted: validated, called with timeouts, and failures handled (the user can still enter a date manually).
 
-## Decisions pending (ADRs to write)
+## Decisions pending
 
-Each needs an ADR in `docs/adr/` with options and trade-offs before code depends on it:
-
-1. Validation library
+None. All stack decisions from `CLAUDE.md` are recorded in `docs/adr/` (0001–0005). New choices need a new ADR.
 
 ## Phases
 

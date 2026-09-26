@@ -12,3 +12,4 @@ File name: `NNNN-short-title.md`. Status: `Proposed`, `Accepted`, `Superseded by
 | [0002](0002-authentication-mechanism.md) | Authentication mechanism (App Service built-in auth, secretless) | Accepted |
 | [0003](0003-test-runner.md) | Test runner and test levels (Vitest, Testcontainers, Playwright) | Accepted |
 | [0004](0004-data-access-and-migrations.md) | Database driver, query layer and migrations (pg, Kysely, Kysely Migrator) | Accepted |
+| [0005](0005-validation-library.md) | Validation library (Zod 4) | Accepted |

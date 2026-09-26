@@ -16,9 +16,9 @@ Decided (changing any of these requires an ADR):
 - App Service built-in authentication for Entra ID sign-in, secretless via managed identity federated credential; the app still validates the identity header on every page, server action and route handler (ADR 0002)
 - Vitest for unit, component and integration tests (Testcontainers Postgres); Playwright end-to-end against a production build; no automatic retries (ADR 0003)
 - `pg` + Kysely for queries (raw SQL only via Kysely `sql` tag); Kysely Migrator with TypeScript migrations run from CI as `longrun_migrator`; the app role has no DDL rights (ADR 0004)
+- Zod 4 for validation at every boundary; use Zod 4 APIs, not Zod 3 examples (ADR 0005)
 
-Pending ADR (do not pick on your own; propose options with trade-offs in an ADR draft):
-- Validation library
+Any other new library, service or tool needs an ADR draft with options and trade-offs; do not pick on your own.
 
 ## Workflow
 - No code without a spec in `specs/`. If the spec is missing or unclear, stop and ask.

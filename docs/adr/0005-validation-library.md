@@ -1,6 +1,6 @@
 # 0005 – Validation library
 
-Status: Proposed
+Status: Accepted
 Date: 2026-09-26
 
 ## Context
@@ -61,7 +61,7 @@ Facts checked on 2026-09-26:
 
 - Rejected because it is easy to get wrong, types drift from checks, and `CLAUDE.md` asks for a schema.
 
-## Decision (proposed)
+## Decision
 
 **A: Zod 4** (full `zod` package, not `zod/mini`), used at every boundary:
 
