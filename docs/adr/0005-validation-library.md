@@ -19,12 +19,12 @@ Facts checked on 2026-09-26:
 - The Next.js forms guide names **Zod** or **Valibot** for server-side validation in server actions ([Next.js forms](https://nextjs.org/docs/app/guides/forms)). Its example uses Zod 3 APIs (`invalid_type_error`, `.flatten()`). Zod 4 removed the first and deprecated the second in favour of `z.treeifyError()` ([Zod 4 changelog](https://zod.dev/v4/changelog)). **We follow the Zod 4 API, not the Next.js snippet.**
 - Versions and direct runtime dependencies (npm):
 
-| Package | Version | Direct deps |
-| --- | --- | --- |
-| `zod` | 4.6.5 | 0 |
-| `valibot` | 1.5.0 | 0 |
-| `arktype` | 2.2.5 | 3 |
-| `typebox` | 1.3.34 | 0 |
+| Package   | Version | Direct deps |
+| --------- | ------- | ----------- |
+| `zod`     | 4.6.5   | 0           |
+| `valibot` | 1.5.0   | 0           |
+| `arktype` | 2.2.5   | 3           |
+| `typebox` | 1.3.34  | 0           |
 
 ## Options
 
@@ -65,13 +65,13 @@ Facts checked on 2026-09-26:
 
 **A: Zod 4** (full `zod` package, not `zod/mini`), used at every boundary:
 
-| Boundary | Rule |
-| --- | --- |
+| Boundary               | Rule                                                                                                                                                                                                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Server actions / forms | Parse `FormData` with a schema. Strings must be strings, not files. Each field is trimmed and has a maximum length. Unknown keys are stripped, not rejected, because Next.js adds `$ACTION_*` keys. Errors are returned per field with `z.treeifyError()`. |
-| Route handlers | Path parameters, query and body parsed with a schema; failures return 400 without internal details. |
-| Identity header | Base64 decode, JSON parse, then schema. Any failure is treated as "no user" (401). |
-| Configuration | One schema for all settings, parsed once at startup. Invalid or missing config stops the app with a message naming the setting, never its value. |
-| endoflife.date | Response parsed with a schema after a timeout-bounded `fetch`. Failure means "no lookup result" and the user can enter the date manually. Unknown fields are ignored. |
+| Route handlers         | Path parameters, query and body parsed with a schema; failures return 400 without internal details.                                                                                                                                                        |
+| Identity header        | Base64 decode, JSON parse, then schema. Any failure is treated as "no user" (401).                                                                                                                                                                         |
+| Configuration          | One schema for all settings, parsed once at startup. Invalid or missing config stops the app with a message naming the setting, never its value.                                                                                                           |
+| endoflife.date         | Response parsed with a schema after a timeout-bounded `fetch`. Failure means "no lookup result" and the user can enter the date manually. Unknown fields are ignored.                                                                                      |
 
 Shared rules:
 

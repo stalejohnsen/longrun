@@ -29,19 +29,19 @@ Engineers and team leads in one organisation who own systems and need to plan up
 
 ## Architecture (decided)
 
-| Concern | Choice |
-| --- | --- |
-| Language / runtime | TypeScript on Node LTS |
-| Web framework | Next.js (App Router) with React, server-rendered first ([ADR 0001](adr/0001-web-framework-and-rendering.md)) |
-| Hosting | Azure App Service (Linux), single environment with a staging slot; deploy to staging, verify, then swap |
-| Database | Azure Database for PostgreSQL Flexible Server (Entra-only auth); `pg` + Kysely, Kysely Migrator run from CI ([ADR 0004](adr/0004-data-access-and-migrations.md)) |
-| Secrets | Azure Key Vault (Key Vault references, managed identity) |
-| Observability | Application Insights, structured logging |
-| Infrastructure | Bicep |
-| CI/CD | GitHub Actions with OIDC to Azure |
-| Identity | Entra ID user sign-in via App Service built-in auth, secretless ([ADR 0002](adr/0002-authentication-mechanism.md)); managed identity for database access |
-| Validation | Zod 4 at every boundary: forms, route handlers, identity header, config, endoflife.date ([ADR 0005](adr/0005-validation-library.md)) |
-| Testing | Vitest (unit, component, integration with Testcontainers Postgres), Playwright end-to-end ([ADR 0003](adr/0003-test-runner.md)) |
+| Concern            | Choice                                                                                                                                                           |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Language / runtime | TypeScript on Node LTS                                                                                                                                           |
+| Web framework      | Next.js (App Router) with React, server-rendered first ([ADR 0001](adr/0001-web-framework-and-rendering.md))                                                     |
+| Hosting            | Azure App Service (Linux), single environment with a staging slot; deploy to staging, verify, then swap                                                          |
+| Database           | Azure Database for PostgreSQL Flexible Server (Entra-only auth); `pg` + Kysely, Kysely Migrator run from CI ([ADR 0004](adr/0004-data-access-and-migrations.md)) |
+| Secrets            | Azure Key Vault (Key Vault references, managed identity)                                                                                                         |
+| Observability      | Application Insights, structured logging                                                                                                                         |
+| Infrastructure     | Bicep                                                                                                                                                            |
+| CI/CD              | GitHub Actions with OIDC to Azure                                                                                                                                |
+| Identity           | Entra ID user sign-in via App Service built-in auth, secretless ([ADR 0002](adr/0002-authentication-mechanism.md)); managed identity for database access         |
+| Validation         | Zod 4 at every boundary: forms, route handlers, identity header, config, endoflife.date ([ADR 0005](adr/0005-validation-library.md))                             |
+| Testing            | Vitest (unit, component, integration with Testcontainers Postgres), Playwright end-to-end ([ADR 0003](adr/0003-test-runner.md))                                  |
 
 End-of-support dates come from endoflife.date where available, with manual entry as the fallback. That data is treated as untrusted: validated, called with timeouts, and failures handled (the user can still enter a date manually).
 
@@ -97,11 +97,11 @@ Each phase is one or more small PRs. A phase with code starts with a spec in `sp
 
 Decided 2026-09-26. Specs build on these.
 
-| Question | Decision |
-| --- | --- |
-| Source of end-of-support dates | Looked up from endoflife.date when the product is supported there; otherwise entered manually. |
-| "Where it is used" | Free text. |
-| Owner | Free-text name (not linked to an Entra ID user or team). |
-| End-of-support window | Chosen by the user (6–12 months is the typical range). |
-| Who may edit or delete a component | Anyone signed in. |
-| Environments | One Azure environment. The App Service staging slot is used for pre-production verification, then swapped into production. No separate dev/test environment. |
+| Question                           | Decision                                                                                                                                                     |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Source of end-of-support dates     | Looked up from endoflife.date when the product is supported there; otherwise entered manually.                                                               |
+| "Where it is used"                 | Free text.                                                                                                                                                   |
+| Owner                              | Free-text name (not linked to an Entra ID user or team).                                                                                                     |
+| End-of-support window              | Chosen by the user (6–12 months is the typical range).                                                                                                       |
+| Who may edit or delete a component | Anyone signed in.                                                                                                                                            |
+| Environments                       | One Azure environment. The App Service staging slot is used for pre-production verification, then swapped into production. No separate dev/test environment. |

@@ -31,17 +31,17 @@ Signed-in users register technology components and see which ones reach end of s
 
 A **component** has:
 
-| Field | Required | Rules |
-| --- | --- | --- |
-| Name | yes | Free text, trimmed, 1–100 characters. Example: "Node.js". |
-| Version | yes | Free text, trimmed, 1–50 characters. Example: "24.12.0". |
-| Where used | yes | Free text, trimmed, 1–500 characters. Example: "Longrun web app, billing API". |
-| Owner | yes | Free-text name, trimmed, 1–100 characters. Not linked to Entra ID. |
-| endoflife.date product | no | Product ID as used by endoflife.date, for example `nodejs`. Lowercase letters, digits, `.`, `_`, `-`; 1–100 characters. |
-| endoflife.date release | no | Release cycle as used by endoflife.date, for example `24`. Letters, digits, `.`, `_`, `-`; 1–50 characters. Required if a product is given. |
-| End-of-support date | no | A calendar date (no time). Either looked up or entered manually. |
-| Date source | derived | `endoflife.date` or `manual`, or none if there is no date. |
-| Looked up at | derived | Timestamp of the last successful lookup, if the source is `endoflife.date`. |
+| Field                  | Required | Rules                                                                                                                                       |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name                   | yes      | Free text, trimmed, 1–100 characters. Example: "Node.js".                                                                                   |
+| Version                | yes      | Free text, trimmed, 1–50 characters. Example: "24.12.0".                                                                                    |
+| Where used             | yes      | Free text, trimmed, 1–500 characters. Example: "Longrun web app, billing API".                                                              |
+| Owner                  | yes      | Free-text name, trimmed, 1–100 characters. Not linked to Entra ID.                                                                          |
+| endoflife.date product | no       | Product ID as used by endoflife.date, for example `nodejs`. Lowercase letters, digits, `.`, `_`, `-`; 1–100 characters.                     |
+| endoflife.date release | no       | Release cycle as used by endoflife.date, for example `24`. Letters, digits, `.`, `_`, `-`; 1–50 characters. Required if a product is given. |
+| End-of-support date    | no       | A calendar date (no time). Either looked up or entered manually.                                                                            |
+| Date source            | derived  | `endoflife.date` or `manual`, or none if there is no date.                                                                                  |
+| Looked up at           | derived  | Timestamp of the last successful lookup, if the source is `endoflife.date`.                                                                 |
 
 The system also stores created and updated timestamps. It stores no personal data beyond the free-text owner name the user types in.
 
@@ -63,11 +63,11 @@ The system also stores created and updated timestamps. It stores no personal dat
 - Timeout: 5 seconds. No retries during the request.
 - Outcomes:
 
-| Outcome | Result |
-| --- | --- |
-| Found, `eolFrom` is a date | Store that date, source `endoflife.date`, and the lookup time. |
-| Found, `eolFrom` is null | No known date. The user is told the product has no announced end of support and may enter a date manually. |
-| 404 | The user is told the product or release was not found on endoflife.date and may correct it or enter a date manually. Nothing is saved until they resubmit. |
+| Outcome                                                  | Result                                                                                                                                                                          |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Found, `eolFrom` is a date                               | Store that date, source `endoflife.date`, and the lookup time.                                                                                                                  |
+| Found, `eolFrom` is null                                 | No known date. The user is told the product has no announced end of support and may enter a date manually.                                                                      |
+| 404                                                      | The user is told the product or release was not found on endoflife.date and may correct it or enter a date manually. Nothing is saved until they resubmit.                      |
 | Timeout, network error, other status or invalid response | The user is told the lookup is unavailable and may enter a date manually or try again. The failure is logged without user-entered values. Nothing is saved until they resubmit. |
 
 - If the user enters a manual date **and** gives a product/release, the lookup result wins when it returns a date. The manual date is used only if the lookup finds no date (decision Q3).
@@ -109,32 +109,32 @@ Each criterion gets at least one automated test (ADR 0003: unit, integration or 
 
 ### Register and list
 
-- **AC1** A signed-in user can register a component with name, version, where used and owner, and it appears in the list. *(e2e)*
-- **AC2** With endoflife.date product `nodejs` and release `24`, the stored date equals the `eolFrom` returned by the API, with source `endoflife.date`. *(integration with a stubbed endoflife.date; one e2e smoke test against the stub)*
-- **AC3** Without a product, a manually entered date is stored with source `manual`. *(integration)*
-- **AC4** Without a product and without a date, the component is stored with no date and shows "unknown". *(integration)*
-- **AC5** The list is sorted by end-of-support date ascending, with unknown dates last and ties sorted by name. *(integration)*
+- **AC1** A signed-in user can register a component with name, version, where used and owner, and it appears in the list. _(e2e)_
+- **AC2** With endoflife.date product `nodejs` and release `24`, the stored date equals the `eolFrom` returned by the API, with source `endoflife.date`. _(integration with a stubbed endoflife.date; one e2e smoke test against the stub)_
+- **AC3** Without a product, a manually entered date is stored with source `manual`. _(integration)_
+- **AC4** Without a product and without a date, the component is stored with no date and shows "unknown". _(integration)_
+- **AC5** The list is sorted by end-of-support date ascending, with unknown dates last and ties sorted by name. _(integration)_
 
 ### Edit and delete
 
-- **AC6** Editing any field and saving updates the component. *(e2e)*
-- **AC7** Changing the product or release triggers a new lookup and updates the date, source and lookup time. *(integration)*
-- **AC7a** "Look up again" on the edit page, with unchanged product and release, replaces the stored date when endoflife.date returns a different date, and updates the lookup time. On failure the stored date is kept. *(integration)*
-- **AC8** Deleting after confirmation removes the component from the list and from the end-of-support view. *(e2e)*
+- **AC6** Editing any field and saving updates the component. _(e2e)_
+- **AC7** Changing the product or release triggers a new lookup and updates the date, source and lookup time. _(integration)_
+- **AC7a** "Look up again" on the edit page, with unchanged product and release, replaces the stored date when endoflife.date returns a different date, and updates the lookup time. On failure the stored date is kept. _(integration)_
+- **AC8** Deleting after confirmation removes the component from the list and from the end-of-support view. _(e2e)_
 
 ### End-of-support view
 
-- **AC9** With window N months, a component whose date is exactly today + N months is shown, and one whose date is one day later is not. *(unit for the date logic, integration for the query)*
-- **AC10** A component whose date is today is shown in the window section, not in "Already unsupported". *(unit)*
-- **AC11** Components with a past date appear under "Already unsupported". *(integration)*
-- **AC12** Components without a date are excluded, and their count is shown. *(integration)*
-- **AC13** The window is read from the URL. An invalid or out-of-range value falls back to the default and tells the user. *(unit + e2e)*
+- **AC9** With window N months, a component whose date is exactly today + N months is shown, and one whose date is one day later is not. _(unit for the date logic, integration for the query)_
+- **AC10** A component whose date is today is shown in the window section, not in "Already unsupported". _(unit)_
+- **AC11** Components with a past date appear under "Already unsupported". _(integration)_
+- **AC12** Components without a date are excluded, and their count is shown. _(integration)_
+- **AC13** The window is read from the URL. An invalid or out-of-range value falls back to the default and tells the user. _(unit + e2e)_
 
 ### Security and platform
 
-- **AC14** Every page, server action and route handler returns 401, or redirects to sign-in through the platform, when there is no valid identity header. `/health` also accepts a valid platform health token, and rejects a wrong or missing one. *(e2e + unit for the header and token helpers)*
-- **AC15** Security headers and a CSP are present on every response. *(e2e)*
-- **AC16** `/health` returns 200 with the database up and 503 with it down. *(integration)*
+- **AC14** Every page, server action and route handler returns 401, or redirects to sign-in through the platform, when there is no valid identity header. `/health` also accepts a valid platform health token, and rejects a wrong or missing one. _(e2e + unit for the header and token helpers)_
+- **AC15** Security headers and a CSP are present on every response. _(e2e)_
+- **AC16** `/health` returns 200 with the database up and 503 with it down. _(integration)_
 
 ## Error cases
 
@@ -163,13 +163,13 @@ Each gets a test.
 
 Resolved 2026-09-26 (proposed defaults accepted).
 
-| # | Question | Decision |
-| --- | --- | --- |
-| Q1 | Which endoflife.date field is "end of support"? `eolFrom` is the end of all support (security fixes) for most products. `eoasFrom` is the end of *active* support. | `eolFrom` |
-| Q2 | Allowed window range and default? | 1–36 months, default 12 |
-| Q3 | If both a product/release and a manual date are given, which wins? | The lookup date wins when found; the manual date is used only when the lookup finds no date |
-| Q4 | Should stored dates be refreshable? Vendors sometimes change dates. | A "Look up again" button on the edit page only. No background refresh in this spec. |
-| Q5 | Show already-unsupported components in the end-of-support view? | Yes, in a separate section above the window |
-| Q6 | Which time zone defines "today"? | UTC |
-| Q7 | How does the user enter the endoflife.date product and release: free text (validated by lookup), or pick from a list fetched from endoflife.date? | Free text with a link to endoflife.date for finding IDs. A picker would be a later spec. |
-| Q8 | Are duplicate components (same name, version and where used) allowed? | Allowed; no uniqueness rule |
+| #   | Question                                                                                                                                                           | Decision                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Q1  | Which endoflife.date field is "end of support"? `eolFrom` is the end of all support (security fixes) for most products. `eoasFrom` is the end of _active_ support. | `eolFrom`                                                                                   |
+| Q2  | Allowed window range and default?                                                                                                                                  | 1–36 months, default 12                                                                     |
+| Q3  | If both a product/release and a manual date are given, which wins?                                                                                                 | The lookup date wins when found; the manual date is used only when the lookup finds no date |
+| Q4  | Should stored dates be refreshable? Vendors sometimes change dates.                                                                                                | A "Look up again" button on the edit page only. No background refresh in this spec.         |
+| Q5  | Show already-unsupported components in the end-of-support view?                                                                                                    | Yes, in a separate section above the window                                                 |
+| Q6  | Which time zone defines "today"?                                                                                                                                   | UTC                                                                                         |
+| Q7  | How does the user enter the endoflife.date product and release: free text (validated by lookup), or pick from a list fetched from endoflife.date?                  | Free text with a link to endoflife.date for finding IDs. A picker would be a later spec.    |
+| Q8  | Are duplicate components (same name, version and where used) allowed?                                                                                              | Allowed; no uniqueness rule                                                                 |

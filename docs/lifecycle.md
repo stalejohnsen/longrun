@@ -1,0 +1,33 @@
+# Lifecycle of Longrun's own dependencies
+
+Longrun tracks end of support for other systems. This file does the same for Longrun itself. Update it in the same PR that adds or upgrades a dependency. Check dates against the official source.
+
+Last checked: 2026-09-26
+
+## Runtime and platform
+
+| Component         | Version       | Support ends                                                                              | Source                                                                      | Notes                                                       |
+| ----------------- | ------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Node.js           | 24 (>= 24.15) | 2028-04-30 (maintenance from 2026-10-20)                                                  | [nodejs/Release](https://github.com/nodejs/Release/blob/main/schedule.json) | Plan move to Node 26 LTS (LTS from 2026-10-28) before 2028. |
+| Next.js           | 16.3.6        | Active LTS until Next 17; then Maintenance LTS for 2 years from 16.0 release (2025-10-21) | [Next.js support policy](https://nextjs.org/support-policy)                 | Major upgrade roughly yearly.                               |
+| React / React DOM | 19.3.0        | No published end date                                                                     | [react.dev](https://react.dev/versions)                                     | Follows Next.js.                                            |
+| `pg`              | 8.23.0        | No published policy                                                                       | [node-postgres](https://node-postgres.com/)                                 | Watch majors.                                               |
+
+## Development tools
+
+| Component                                     | Version               | Support ends          | Source                                                       | Notes                                                                                                                                                                                                                     |
+| --------------------------------------------- | --------------------- | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TypeScript                                    | 6.0.3 (pinned `~6.0`) | No published policy   | [TypeScript](https://www.typescriptlang.org/)                | Held below 7.0: `typescript-eslint` 8.70 supports `<6.1.0` (ADR 0006).                                                                                                                                                    |
+| ESLint                                        | 9.39.5                | **EOL 2026-08-06**    | [ESLint version support](https://eslint.org/version-support) | Held at 9 because `eslint-config-next` 16.3.6 depends on `eslint-plugin-react`, `eslint-plugin-jsx-a11y` and `eslint-plugin-import`, which support ESLint only up to 9. Dev-only; move to ESLint 10 when they support it. |
+| Vitest                                        | 5.0.2                 | No published end date | [Vitest](https://vitest.dev/)                                |                                                                                                                                                                                                                           |
+| Playwright                                    | 1.63.0                | No published end date | [Playwright](https://playwright.dev/)                        |                                                                                                                                                                                                                           |
+| jsdom                                         | 30.1.1                | No published end date | [jsdom](https://github.com/jsdom/jsdom)                      | Requires Node >= 24.15.                                                                                                                                                                                                   |
+| Testcontainers (`@testcontainers/postgresql`) | 12.1.0                | No published end date | [Testcontainers](https://node.testcontainers.org/)           | Requires Node >= 22.22.                                                                                                                                                                                                   |
+| Prettier                                      | 3.9.9                 | No published end date | [Prettier](https://prettier.io/)                             |                                                                                                                                                                                                                           |
+
+## Test infrastructure
+
+| Component                                                  | Version                                | Notes                                                                                  |
+| ---------------------------------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------- |
+| Postgres image for tests                                   | `postgres:17-alpine`                   | Must match the Azure Flexible Server major version chosen in the infrastructure phase. |
+| GitHub Actions `checkout`, `setup-node`, `upload-artifact` | v7.0.1, v7.0.0, v7.0.1 (pinned by SHA) | Update SHAs deliberately.                                                              |

@@ -35,12 +35,12 @@ Facts checked on 2026-09-26:
 
 ## Test levels
 
-| Level | What | Runs against |
-| --- | --- | --- |
-| Unit | Pure logic: validation schemas, date-window calculation, identity-header parsing, endoflife.date response handling | Node, in-process |
-| Component | Synchronous Server Components and Client Components | Simulated browser DOM (jsdom) |
-| Integration | Data access, migrations, server actions with a real database | Real Postgres in a container (Testcontainers) |
-| End-to-end | User flows, async Server Components, auth enforcement (401 without identity), security headers and CSP | `next build` + `next start`, real Postgres, real browser |
+| Level       | What                                                                                                               | Runs against                                             |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| Unit        | Pure logic: validation schemas, date-window calculation, identity-header parsing, endoflife.date response handling | Node, in-process                                         |
+| Component   | Synchronous Server Components and Client Components                                                                | Simulated browser DOM (jsdom)                            |
+| Integration | Data access, migrations, server actions with a real database                                                       | Real Postgres in a container (Testcontainers)            |
+| End-to-end  | User flows, async Server Components, auth enforcement (401 without identity), security headers and CSP             | `next build` + `next start`, real Postgres, real browser |
 
 ## Options
 
@@ -89,7 +89,7 @@ Configuration rules:
 - **Playwright:**
   - Runs against a production build (`next build && next start`), not `next dev`.
   - Uses the development stand-in identity from ADR 0002 and a Testcontainers Postgres.
-  - Also includes one test proving that requests *without* an identity get 401.
+  - Also includes one test proving that requests _without_ an identity get 401.
 - **No automatic retries anywhere:** `retries: 0` in Playwright and no `retry` in Vitest, as `CLAUDE.md` requires.
 - **Coverage:** `@vitest/coverage-v8` with thresholds set once the skeleton exists. Thresholds may only go up.
 - **Mutation testing** (Stryker): not added now. It gets its own proposal once there is enough domain logic to make it worthwhile. `CLAUDE.md` already forbids weakening it once it exists.
