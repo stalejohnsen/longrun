@@ -6,6 +6,19 @@ export default defineConfig({
   plugins: [react()],
   test: {
     retry: 0,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**'],
+      exclude: [
+        // Covered by end-to-end tests against the production build (ADR 0003).
+        'src/app/**',
+        'src/instrumentation.ts',
+        // Run as a child process with plain Node in test/db/migrate.int.test.ts, invisible to v8 coverage here.
+        'src/db/migrate.ts',
+      ],
+      // Thresholds only go up (CLAUDE.md, ADR 0003).
+      thresholds: { statements: 95, branches: 93, functions: 90, lines: 96 },
+    },
     projects: [
       {
         extends: true,
