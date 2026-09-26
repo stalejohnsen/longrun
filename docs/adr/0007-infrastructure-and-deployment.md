@@ -64,9 +64,29 @@ Facts checked on 2026-09-26:
   - slot-sticky app settings for identity and database user.
 - PostgreSQL Flexible Server **B1ms**, version **17**, 32 GB storage, no HA, 7-day backups:
   - **Entra-only authentication**, with the owner as Entra admin for bootstrap only;
-  - public access with firewall rules for the web app's outbound IP addresses;
-  - no "allow all Azure services" rule.
-  - the rules are applied only when the web app's outbound addresses differ from the existing rules (`deployFirewallRules`). Each rule takes about a minute even when unchanged, so re-applying all 31 on every deploy added about 30 minutes.
+  - the app reaches it over a **private endpoint** (see below);
+  - public access stays enabled but with **no permanent firewall rules** and no "allow all Azure services" rule. Only the temporary CI migration and owner bootstrap rules use it.
+- **Private network path** (amended 2026-09-26):
+  - virtual network `vnet-longrun` (`10.60.0.0/24`) with `snet-app` (`/26`, delegated to App Service) and `snet-private-endpoints` (`/28`);
+  - a private endpoint for the PostgreSQL server (`postgresqlServer`) and the private DNS zone `privatelink.postgres.database.azure.com` linked to the VNet;
+  - App Service virtual network integration on both slots. It isn't swapped, so each slot is configured, both on `snet-app`. Only private (RFC 1918) traffic goes through the VNet; internet egress is unchanged.
+
+### Amendment 2026-09-26: private endpoint instead of outbound-IP firewall rules
+
+The first design allowed the web app's `possibleOutboundIpAddresses` through firewall rules. That was **31 addresses**, while the app actually used 7; the rest are addresses App Service might switch to. Each Flexible Server firewall rule is a serialized server configuration change of about one minute, even when unchanged, so every deploy took about 30 extra minutes. A "skip if unchanged" check hid the cost, but it was a workaround: it didn't remove the dependency on an IP list we don't control, and a real change would still cost 30 minutes.
+
+A private endpoint with App Service virtual network integration removes the dependency. It's Microsoft's recommended alternative, it works with public access and Entra authentication ([Private Link for Flexible Server](https://learn.microsoft.com/en-us/azure/postgresql/network/concepts-networking-private-link)), and it's more secure: app-to-database traffic never uses public addresses.
+
+- Virtual network integration has no extra charge ([VNet integration](https://learn.microsoft.com/en-us/azure/app-service/overview-vnet-integration)).
+- The private DNS zone costs $0.50/month.
+- The private endpoint is billed per hour plus per GB processed ([Private Link pricing](https://azure.microsoft.com/pricing/details/private-link/)).
+
+Rejected alternatives:
+
+- **Only the 7 current outbound IPs:** breaks when App Service changes them.
+- **"Allow all Azure services":** weakest network isolation.
+
+The 31 legacy `app-outbound-*` rules are removed once, after the private path is verified (`docs/runbooks/remove-legacy-firewall-rules.md`).
 
 The pipeline never gets Microsoft Graph permissions or the right to assign roles. **Main contains no role assignments.**
 

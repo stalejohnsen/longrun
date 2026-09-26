@@ -11,7 +11,7 @@ Creates the database login roles for the three managed identities and applies th
 
 ## 1. Allow your IP address temporarily
 
-The server only accepts the web app's outbound addresses (ADR 0007). Add a temporary rule for your own address. This is the owner-side counterpart of the CI migration rule, and the same exception applies: it is **always removed** in step 5.
+The server has no permanent firewall rules; the app uses a private endpoint (ADR 0007). Add a temporary rule for your own address. This is the owner-side counterpart of the CI migration rule, and the same exception applies: it is **always removed** in step 5.
 
 ```sh
 SERVER=$(az postgres flexible-server list -g rg-longrun --query "[0].name" -o tsv)
@@ -73,7 +73,7 @@ Expect `longrun_migrator`, `longrun_app_production` and `longrun_app_staging` as
 az postgres flexible-server firewall-rule delete -g rg-longrun --server-name "$SERVER" --name owner-bootstrap --yes
 ```
 
-Confirm that only `app-outbound-*` rules remain:
+Confirm that `owner-bootstrap` is gone (no other rules should exist once the legacy cleanup is done):
 
 ```sh
 az postgres flexible-server firewall-rule list -g rg-longrun --server-name "$SERVER" --query "[].name" -o tsv
