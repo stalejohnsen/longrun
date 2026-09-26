@@ -28,9 +28,6 @@ param stagingAuthClientId string
 @description('Identifier URI of the staging app registration (bootstrap output).')
 param stagingAuthAudience string
 
-@description('Apply database firewall rules. The workflow sets this only when the web app outbound addresses differ from the existing rules; each rule takes about a minute even when unchanged.')
-param deployFirewallRules bool = true
-
 var tenantId = tenant().tenantId
 var appName = webAppName(subscription().subscriptionId)
 var serverName = postgresServerName(subscription().subscriptionId)
@@ -160,6 +157,8 @@ resource webApp 'Microsoft.Web/sites@2024-11-01' = {
   }
   properties: {
     serverFarmId: plan.id
+    // Outbound private traffic (the database's private endpoint) goes through the VNet.
+    virtualNetworkSubnetId: '${vnet.id}/subnets/snet-app'
     httpsOnly: true
     clientAffinityEnabled: false
     publicNetworkAccess: 'Enabled'
@@ -178,6 +177,8 @@ resource stagingSlot 'Microsoft.Web/sites/slots@2024-11-01' = {
   }
   properties: {
     serverFarmId: plan.id
+    // Virtual network integration is not swapped; each slot has its own (same subnet).
+    virtualNetworkSubnetId: '${vnet.id}/subnets/snet-app'
     httpsOnly: true
     clientAffinityEnabled: false
     publicNetworkAccess: 'Enabled'
@@ -309,13 +310,82 @@ resource stagingAuth 'Microsoft.Web/sites/slots/config@2024-11-01' = {
   )
 }
 
-// --- Database firewall: the web app's outbound addresses (ADR 0007) ------------------------
+// --- Private network path from the app to PostgreSQL (ADR 0007) ---------------------------
+// The app reaches the database through a private endpoint over App Service virtual network
+// integration. The server keeps public access enabled but has no permanent firewall rules:
+// only the temporary, always-removed CI migration and owner bootstrap rules use it.
 
-module firewall 'postgres-firewall.bicep' = if (deployFirewallRules) {
-  name: 'longrun-postgres-firewall'
-  params: {
-    serverName: postgres.name
-    ipAddresses: webApp.properties.possibleOutboundIpAddresses
+resource vnet 'Microsoft.Network/virtualNetworks@2025-09-01' = {
+  name: 'vnet-longrun'
+  location: location
+  properties: {
+    addressSpace: { addressPrefixes: ['10.60.0.0/24'] }
+    subnets: [
+      {
+        // App Service virtual network integration; /26 covers the plan's maximum scale.
+        name: 'snet-app'
+        properties: {
+          addressPrefix: '10.60.0.0/26'
+          delegations: [
+            {
+              name: 'app-service'
+              properties: { serviceName: 'Microsoft.Web/serverFarms' }
+            }
+          ]
+        }
+      }
+      {
+        name: 'snet-private-endpoints'
+        properties: {
+          addressPrefix: '10.60.0.64/28'
+        }
+      }
+    ]
+  }
+}
+
+resource postgresPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+  name: 'privatelink.postgres.database.azure.com'
+  location: 'global'
+}
+
+resource postgresPrivateDnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+  parent: postgresPrivateDnsZone
+  name: 'vnet-longrun'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: { id: vnet.id }
+  }
+}
+
+resource postgresPrivateEndpoint 'Microsoft.Network/privateEndpoints@2025-09-01' = {
+  name: 'pe-${serverName}'
+  location: location
+  properties: {
+    subnet: { id: '${vnet.id}/subnets/snet-private-endpoints' }
+    privateLinkServiceConnections: [
+      {
+        name: 'postgres'
+        properties: {
+          privateLinkServiceId: postgres.id
+          groupIds: ['postgresqlServer']
+        }
+      }
+    ]
+  }
+}
+
+resource postgresPrivateDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2025-09-01' = {
+  parent: postgresPrivateEndpoint
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'postgres'
+        properties: { privateDnsZoneId: postgresPrivateDnsZone.id }
+      }
+    ]
   }
 }
 
