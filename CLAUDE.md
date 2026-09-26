@@ -1,0 +1,81 @@
+# CLAUDE.md
+
+## Project
+Longrun is a lifecycle register: users register technology components (name, version, where they are used, owner) and see which ones reach end of support in the next 6–12 months. It is a learning project for agentic coding on Azure. Keep it small. Do not add features that are not in a spec.
+
+Plan and background: `docs/plan.md`. Decisions: `docs/adr/`. Specs: `specs/`.
+
+## Stack
+Decided (changing any of these requires an ADR):
+- TypeScript on Node LTS
+- Azure App Service (Linux), Azure Database for PostgreSQL Flexible Server, Azure Key Vault, Application Insights
+- Bicep for all infrastructure
+- GitHub Actions with OIDC to Azure
+- Entra ID for user sign-in and for database access (managed identity, no passwords)
+
+Pending ADR (do not pick on your own; propose options with trade-offs in an ADR draft):
+- Web framework and rendering approach
+- Test runner, database driver/query layer, migration tool, validation library
+
+## Workflow
+- No code without a spec in `specs/`. If the spec is missing or unclear, stop and ask.
+- Start every task with a short plan: files to change, tests to add, risks. Wait for approval on anything touching infra, auth, security or dependencies.
+- One task per branch and PR. Keep diffs small.
+- Update docs, specs and ADRs in the same PR as the code they describe.
+- When you are unsure, ask. Do not guess about Azure behaviour, library APIs or versions; check official docs.
+
+## Commands
+Fill in when the skeleton exists:
+- Install: `npm ci`
+- Lint / typecheck: TBD
+- Unit tests: TBD
+- Integration tests (Testcontainers Postgres): TBD
+- Run locally: TBD
+
+Run lint, typecheck and all tests before declaring a task done.
+
+## Repository layout
+- `src/` application code
+- `test/` tests, mirroring `src/`
+- `migrations/` versioned database migrations
+- `infra/` Bicep
+- `specs/` feature specs
+- `docs/adr/`, `docs/runbooks/`, `docs/lifecycle.md`, `docs/learnings.md`
+
+## Security (secure by default)
+- Validate all external input with a schema at the boundary (HTTP, external APIs, config).
+- Parameterized queries only. No string-built SQL.
+- No secrets anywhere in the repo, pipeline variables or plain app settings. Use Key Vault references and managed identity.
+- Least privilege for every identity: app, pipeline, database roles.
+- HTTPS only, security headers, secure defaults. Authentication is required on every route except the health endpoint.
+- Never log personal data, tokens or secrets. Use structured logging.
+- Treat data from external APIs (e.g. endoflife.date) as untrusted: validate, time out, handle failure.
+
+## Testing
+- Tests describe behaviour from the spec, not implementation details.
+- Every acceptance criterion and error case in a spec has a test.
+- Integration tests run against real Postgres, not mocks.
+- Flaky tests are fixed, not retried or skipped.
+
+## Dependencies
+- Keep direct runtime dependencies few. Prefer Node and platform built-ins.
+- A new dependency needs a one-paragraph justification in the PR: why, alternatives, maintenance status. Add it to `docs/lifecycle.md` if it has a support end date.
+- Never add install scripts, never use `npm install` in CI, always commit the lockfile.
+- GitHub Actions are pinned to a full commit SHA.
+
+## Database
+- All schema changes via migrations in `migrations/`. Never edit an applied migration.
+- Migrations must be backward compatible (expand/contract) so the previous app version still works during slot swap.
+
+## Infrastructure
+- All Azure resources are defined in Bicep. Never create or change resources manually or via ad-hoc CLI commands.
+- Do not create or modify role assignments, federated credentials or Key Vault access without explicit approval.
+
+## Never
+- Disable, skip or weaken a test, lint rule, coverage/mutation threshold or CI check to get a green build.
+- Commit secrets, connection strings or `.env` files.
+- Introduce services, libraries or hosting models outside the decided stack without an ADR.
+- Silence errors with empty catch blocks.
+
+## Learnings
+When I correct you on something that is likely to recur, suggest a one-line addition to this file or to `docs/learnings.md`.
