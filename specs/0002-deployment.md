@@ -26,12 +26,12 @@ Every change merged to `main` is built once and deployed to Azure. Infrastructur
 - CI (existing) also builds and lints all Bicep files offline (`bicep build` / `bicep lint`).
 - No Azure access from pull requests.
 
-### Deploy (on `main`, after CI succeeds)
+### Deploy (started manually on `main`)
 
-Steps 3–8 run in a single job in the `production` environment, so the owner approves once per deployment.
+The owner starts the `Deploy` workflow on `main` (Actions → Deploy → Run workflow). **That manual start is the approval.** GitHub offers no required reviewers on environments for private repositories on the Free, Pro or Team plans ([GitHub docs](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)). There is no automatic trigger. Mode `infra-only` stops after step 3; it is used once, before the database bootstrap (`docs/runbooks/first-deployment.md`).
 
 1. **Build:** the standalone bundle is built once, with `DEPLOYMENT_ID` = commit SHA, and stored as a workflow artifact. Every later step uses this artifact.
-2. **Approval:** the job waits for the owner's approval in the GitHub `production` environment before any Azure change.
+2. **CI gate:** the workflow refuses to run unless the `verify` and `infra` CI checks succeeded for the commit.
 3. **Infrastructure:** `what-if` output is shown in the job log, then `infra/main` is deployed.
 4. **Migrations:**
    - A temporary firewall rule `ci-migration-<run id>` is added for the runner's IP address.

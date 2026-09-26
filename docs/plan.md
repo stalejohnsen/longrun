@@ -72,7 +72,7 @@ Spec [0002](../specs/0002-deployment.md), ADR [0007](adr/0007-infrastructure-and
 1. ADR 0007 and spec 0002.
 2. Bootstrap Bicep (owner-run) and runbooks: bootstrap, database roles.
 3. Main Bicep, with Bicep build and lint in CI.
-4. Deploy workflow (build → approval → infra → migrations → staging → verify → swap), migration token support, rollback and first-deployment runbooks.
+4. Deploy workflow (manual start on `main` → CI gate → build → infra → migrations → staging → verify → swap), migration token support, rollback and first-deployment runbooks.
 
 ### Phase 3 – Authentication
 
