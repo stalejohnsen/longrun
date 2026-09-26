@@ -14,8 +14,9 @@ Decided (changing any of these requires an ADR):
 - Entra ID for user sign-in and for database access (managed identity, no passwords)
 - Next.js (App Router) with React, server-rendered first; client components only where a spec needs them (ADR 0001)
 
+- App Service built-in authentication for Entra ID sign-in, secretless via managed identity federated credential; the app still validates the identity header on every page, server action and route handler (ADR 0002)
+
 Pending ADR (do not pick on your own; propose options with trade-offs in an ADR draft):
-- Authentication mechanism (App Service built-in auth vs. in-app OIDC library)
 - Test runner, database driver/query layer, migration tool, validation library
 
 ## Workflow

@@ -1,6 +1,6 @@
 # 0002 – Authentication mechanism
 
-Status: Proposed
+Status: Accepted
 Date: 2026-09-26
 
 ## Context
@@ -83,7 +83,7 @@ Facts checked on 2026-09-26 (Microsoft Learn, npm registry):
 
 - Rejected because v5 has been in beta for a long time and its maintainers recommend another library for new projects.
 
-## Decision (proposed)
+## Decision
 
 **A: App Service built-in authentication** with the Microsoft Entra provider:
 
