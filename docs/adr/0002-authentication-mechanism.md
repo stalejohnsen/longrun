@@ -5,7 +5,7 @@ Date: 2026-09-26
 
 ## Context
 
-`CLAUDE.md` decides that users sign in with Entra ID and that authentication is required on every route except the health endpoint. It does not decide *where* sign-in happens. ADR 0001 chose Next.js (server-rendered first) on App Service Linux with a staging slot. It also noted that keeping unauthenticated traffic away from Next.js limits exposure to pre-auth framework vulnerabilities such as CVE-2025-55182.
+`CLAUDE.md` decides that users sign in with Entra ID and that authentication is required on every route except the health endpoint. It does not decide _where_ sign-in happens. ADR 0001 chose Next.js (server-rendered first) on App Service Linux with a staging slot. It also noted that keeping unauthenticated traffic away from Next.js limits exposure to pre-auth framework vulnerabilities such as CVE-2025-55182.
 
 Requirements:
 

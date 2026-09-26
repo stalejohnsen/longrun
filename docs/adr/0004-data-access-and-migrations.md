@@ -26,15 +26,15 @@ Facts checked on 2026-09-26:
 
 **Driver and query-layer packages (npm)**
 
-| Package | Version | Direct deps | Notes |
-| --- | --- | --- | --- |
-| `pg` (node-postgres) | 8.23.0 | 6 | `password` can be a function ([docs](https://node-postgres.com/apis/client)) |
-| `postgres` (postgres.js) | 3.4.9 | 0 | password can be a sync or async function called at connect time |
-| `kysely` | 0.29.6 | 0 | type-safe SQL query builder; built-in `Migrator` that takes a database-level lock so concurrent runs are serialized ([docs](https://kysely.dev/docs/migrations)) |
-| `drizzle-orm` / `drizzle-kit` | 0.45.3 / 0.31.11 | 0 / 4 | 1.0 is at release candidate (`1.0.0-rc.5`), so a major upgrade is imminent; kit generates SQL migrations from a TypeScript schema |
-| `prisma` / `@prisma/client` | 8.0.0-rc.17 (`latest` tag) / 7.10.0 | 12 (CLI) | the CLI's `latest` npm tag currently points at a release candidate; the CLI pulls in cloud/management SDKs |
-| `node-pg-migrate` | 9.0.0 | 3 | SQL or JS migrations on top of `pg` |
-| `@azure/identity` | 4.13.3 | 12 | official token acquisition with managed identity (Node ≥ 22) |
+| Package                       | Version                             | Direct deps | Notes                                                                                                                                                            |
+| ----------------------------- | ----------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pg` (node-postgres)          | 8.23.0                              | 6           | `password` can be a function ([docs](https://node-postgres.com/apis/client))                                                                                     |
+| `postgres` (postgres.js)      | 3.4.9                               | 0           | password can be a sync or async function called at connect time                                                                                                  |
+| `kysely`                      | 0.29.6                              | 0           | type-safe SQL query builder; built-in `Migrator` that takes a database-level lock so concurrent runs are serialized ([docs](https://kysely.dev/docs/migrations)) |
+| `drizzle-orm` / `drizzle-kit` | 0.45.3 / 0.31.11                    | 0 / 4       | 1.0 is at release candidate (`1.0.0-rc.5`), so a major upgrade is imminent; kit generates SQL migrations from a TypeScript schema                                |
+| `prisma` / `@prisma/client`   | 8.0.0-rc.17 (`latest` tag) / 7.10.0 | 12 (CLI)    | the CLI's `latest` npm tag currently points at a release candidate; the CLI pulls in cloud/management SDKs                                                       |
+| `node-pg-migrate`             | 9.0.0                               | 3           | SQL or JS migrations on top of `pg`                                                                                                                              |
+| `@azure/identity`             | 4.13.3                              | 12          | official token acquisition with managed identity (Node ≥ 22)                                                                                                     |
 
 ## Options
 
