@@ -15,9 +15,10 @@ Decided (changing any of these requires an ADR):
 - Next.js (App Router) with React, server-rendered first; client components only where a spec needs them (ADR 0001)
 - App Service built-in authentication for Entra ID sign-in, secretless via managed identity federated credential; the app still validates the identity header on every page, server action and route handler (ADR 0002)
 - Vitest for unit, component and integration tests (Testcontainers Postgres); Playwright end-to-end against a production build; no automatic retries (ADR 0003)
+- `pg` + Kysely for queries (raw SQL only via Kysely `sql` tag); Kysely Migrator with TypeScript migrations run from CI as `longrun_migrator`; the app role has no DDL rights (ADR 0004)
 
 Pending ADR (do not pick on your own; propose options with trade-offs in an ADR draft):
-- Database driver/query layer, migration tool, validation library
+- Validation library
 
 ## Workflow
 - No code without a spec in `specs/`. If the spec is missing or unclear, stop and ask.

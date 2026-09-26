@@ -34,7 +34,7 @@ Engineers and team leads in one organisation who own systems and need to plan up
 | Language / runtime | TypeScript on Node LTS |
 | Web framework | Next.js (App Router) with React, server-rendered first ([ADR 0001](adr/0001-web-framework-and-rendering.md)) |
 | Hosting | Azure App Service (Linux), single environment with a staging slot; deploy to staging, verify, then swap |
-| Database | Azure Database for PostgreSQL Flexible Server |
+| Database | Azure Database for PostgreSQL Flexible Server (Entra-only auth); `pg` + Kysely, Kysely Migrator run from CI ([ADR 0004](adr/0004-data-access-and-migrations.md)) |
 | Secrets | Azure Key Vault (Key Vault references, managed identity) |
 | Observability | Application Insights, structured logging |
 | Infrastructure | Bicep |
@@ -48,9 +48,7 @@ End-of-support dates come from endoflife.date where available, with manual entry
 
 Each needs an ADR in `docs/adr/` with options and trade-offs before code depends on it:
 
-1. Database driver / query layer
-2. Migration tool
-3. Validation library
+1. Validation library
 
 ## Phases
 

@@ -1,6 +1,6 @@
 # 0004 – Database driver, query layer and migrations
 
-Status: Proposed
+Status: Accepted
 Date: 2026-09-26
 
 ## Context
@@ -83,7 +83,7 @@ Facts checked on 2026-09-26:
 - Pros: zero dependencies and good ergonomics.
 - Rejected because Kysely, Drizzle and `node-pg-migrate` target `pg` first. Using two drivers, or a less common pairing, adds risk for little gain.
 
-## Decision (proposed)
+## Decision
 
 **A: `pg` + Kysely + the Kysely `Migrator`**, with `@azure/identity` for tokens.
 
