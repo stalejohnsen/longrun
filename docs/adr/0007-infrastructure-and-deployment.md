@@ -46,7 +46,7 @@ Facts checked on 2026-09-26:
 
 - Resource group `rg-longrun` in `swedencentral`.
 - User-assigned identities `id-longrun-pipeline`, `id-longrun-app-prod` and `id-longrun-app-staging`.
-- A GitHub OIDC federated credential on the pipeline identity, subject `repo:stalejohnsen/longrun:environment:production` only.
+- A GitHub OIDC federated credential on the pipeline identity, subject `repo:stalejohnsen@98233333/longrun@1389214305:environment:production` only. This is GitHub's immutable subject format (owner and repository IDs), the default for repositories created after 2026-07-15 ([changelog](https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/)).
 - Two Entra app registrations for built-in auth (production and staging). Each trusts its slot's identity through a federated credential, so there is no client secret (ADR 0002).
 - `Contributor` for the pipeline identity on `rg-longrun`.
 - A monthly cost budget with alerts (default $100).

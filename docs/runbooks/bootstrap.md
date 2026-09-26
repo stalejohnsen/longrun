@@ -56,7 +56,7 @@ az deployment sub what-if \
 Review the output. Expect:
 
 - 1 resource group and 3 managed identities;
-- 1 federated credential with subject `repo:stalejohnsen/longrun:environment:production`;
+- 1 federated credential with subject `repo:stalejohnsen@98233333/longrun@1389214305:environment:production`;
 - 2 app registrations, each with 1 federated credential, and 2 service principals;
 - 1 role assignment (`Contributor` on `rg-longrun` for `id-longrun-pipeline`);
 - 1 budget.
@@ -125,7 +125,7 @@ done
   gh secret list --repo stalejohnsen/longrun --env production
   ```
 
-- The federated credential subject is exactly `repo:stalejohnsen/longrun:environment:production`.
+- The federated credential subject is exactly `repo:stalejohnsen@98233333/longrun@1389214305:environment:production`.
 
 ## Remove everything (if ever needed)
 

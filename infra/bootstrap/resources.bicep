@@ -10,6 +10,8 @@ import {
 
 param location string
 param githubRepository string
+param githubOwnerId string
+param githubRepositoryId string
 param githubEnvironment string
 param monthlyBudget int
 param budgetStartDate string
@@ -33,12 +35,18 @@ resource pipelineIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024
 
 
 // GitHub Actions OIDC: only jobs in the given environment of this repository may sign in.
+// Repositories created after 2026-07-15 use immutable subject claims with owner and repository
+// IDs, so a recreated repository with the same name cannot sign in.
+var githubOwner = split(githubRepository, '/')[0]
+var githubRepoName = split(githubRepository, '/')[1]
+var githubSubject = 'repo:${githubOwner}@${githubOwnerId}/${githubRepoName}@${githubRepositoryId}:environment:${githubEnvironment}'
+
 resource githubFederatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2024-11-30' = {
   parent: pipelineIdentity
   name: 'github-${githubEnvironment}'
   properties: {
     issuer: 'https://token.actions.githubusercontent.com'
-    subject: 'repo:${githubRepository}:environment:${githubEnvironment}'
+    subject: githubSubject
     audiences: [tokenExchangeAudience]
   }
 }
