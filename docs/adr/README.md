@@ -6,7 +6,11 @@ File name: `NNNN-short-title.md`. Status: `Proposed`, `Accepted`, `Superseded by
 
 ## Index
 
-| ADR | Title | Status |
-| --- | --- | --- |
-| [0001](0001-web-framework-and-rendering.md) | Web framework and rendering approach (Next.js, server-rendered first) | Accepted |
-| [0002](0002-authentication-mechanism.md) | Authentication mechanism (App Service built-in auth, secretless) | Accepted |
+| ADR                                         | Title                                                                     | Status   |
+| ------------------------------------------- | ------------------------------------------------------------------------- | -------- |
+| [0001](0001-web-framework-and-rendering.md) | Web framework and rendering approach (Next.js, server-rendered first)     | Accepted |
+| [0002](0002-authentication-mechanism.md)    | Authentication mechanism (App Service built-in auth, secretless)          | Accepted |
+| [0003](0003-test-runner.md)                 | Test runner and test levels (Vitest, Testcontainers, Playwright)          | Accepted |
+| [0004](0004-data-access-and-migrations.md)  | Database driver, query layer and migrations (pg, Kysely, Kysely Migrator) | Accepted |
+| [0005](0005-validation-library.md)          | Validation library (Zod 4)                                                | Accepted |
+| [0006](0006-lint-and-format.md)             | Lint and format (ESLint 9 with Next.js presets, Prettier; TypeScript 6.0) | Accepted |
