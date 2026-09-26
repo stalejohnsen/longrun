@@ -9,3 +9,4 @@ File name: `NNNN-short-title.md`. Status: `Proposed`, `Accepted`, `Superseded by
 | ADR | Title | Status |
 | --- | --- | --- |
 | [0001](0001-web-framework-and-rendering.md) | Web framework and rendering approach (Next.js, server-rendered first) | Accepted |
+| [0002](0002-authentication-mechanism.md) | Authentication mechanism | Proposed |
