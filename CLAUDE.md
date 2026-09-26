@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 ## Project
-Longrun is a lifecycle register: users register technology components (name, version, where they are used, owner) and see which ones reach end of support in the next 6–12 months. It is a learning project for agentic coding on Azure. Keep it small. Do not add features that are not in a spec.
+Longrun is a lifecycle register: users register technology components (name, version, where they are used, owner) and see which ones reach end of support within a window they choose (typically 6–12 months). It is a learning project for agentic coding on Azure. Keep it small. Do not add features that are not in a spec.
 
 Plan and background: `docs/plan.md`. Decisions: `docs/adr/`. Specs: `specs/`.
 
@@ -12,9 +12,10 @@ Decided (changing any of these requires an ADR):
 - Bicep for all infrastructure
 - GitHub Actions with OIDC to Azure
 - Entra ID for user sign-in and for database access (managed identity, no passwords)
+- Next.js (App Router) with React, server-rendered first; client components only where a spec needs them (ADR 0001)
 
 Pending ADR (do not pick on your own; propose options with trade-offs in an ADR draft):
-- Web framework and rendering approach
+- Authentication mechanism (App Service built-in auth vs. in-app OIDC library)
 - Test runner, database driver/query layer, migration tool, validation library
 
 ## Workflow
