@@ -32,6 +32,7 @@ Engineers and team leads in one organisation who own systems and need to plan up
 | Concern | Choice |
 | --- | --- |
 | Language / runtime | TypeScript on Node LTS |
+| Web framework | Next.js (App Router) with React, server-rendered first ([ADR 0001](adr/0001-web-framework-and-rendering.md)) |
 | Hosting | Azure App Service (Linux), single environment with a staging slot; deploy to staging, verify, then swap |
 | Database | Azure Database for PostgreSQL Flexible Server |
 | Secrets | Azure Key Vault (Key Vault references, managed identity) |
@@ -46,12 +47,11 @@ End-of-support dates come from endoflife.date where available, with manual entry
 
 Each needs an ADR in `docs/adr/` with options and trade-offs before code depends on it:
 
-1. Web framework and rendering approach (server-rendered vs. SPA + API)
-2. Test runner
-3. Database driver / query layer
-4. Migration tool
-5. Validation library
-6. Authentication mechanism (App Service built-in auth vs. in-app OIDC library)
+1. Test runner (must cover React components; see ADR 0001)
+2. Database driver / query layer
+3. Migration tool
+4. Validation library
+5. Authentication mechanism (App Service built-in auth vs. in-app OIDC library)
 
 ## Phases
 
