@@ -134,7 +134,7 @@ jobs:
           fi
           wanted=$(az webapp show --resource-group "$RESOURCE_GROUP" --name "$app" \
             --query possibleOutboundIpAddresses --output tsv | tr -d '\r' | tr ',' '\n' | grep -v ':' | sort -u)
-          existing=$(az postgres flexible-server firewall-rule list --resource-group "$RESOURCE_GROUP" --name "$server" \
+          existing=$(az postgres flexible-server firewall-rule list --resource-group "$RESOURCE_GROUP" --server-name "$server" \
             --query "[?starts_with(name, 'app-outbound-')].startIpAddress" --output tsv | tr -d '\r' | sort -u)
           if [ "$wanted" = "$existing" ]; then
             echo "Firewall rules already match $(wc -l <<<"$wanted") outbound addresses; skipping"
@@ -192,8 +192,8 @@ jobs:
           ip=$(curl -fsS --max-time 10 https://api.ipify.org)
           az postgres flexible-server firewall-rule create \
             --resource-group "$RESOURCE_GROUP" \
-            --name "${{ steps.infra.outputs.postgres_server }}" \
-            --rule-name "ci-migration-$RUN_ID" \
+            --server-name "${{ steps.infra.outputs.postgres_server }}" \
+            --name "ci-migration-$RUN_ID" \
             --start-ip-address "$ip" --end-ip-address "$ip" --output none
           echo "created=true" >> "$GITHUB_OUTPUT"
 
@@ -216,8 +216,8 @@ jobs:
         run: |
           az postgres flexible-server firewall-rule delete \
             --resource-group "$RESOURCE_GROUP" \
-            --name "${{ steps.infra.outputs.postgres_server }}" \
-            --rule-name "ci-migration-$RUN_ID" --yes --output none
+            --server-name "${{ steps.infra.outputs.postgres_server }}" \
+            --name "ci-migration-$RUN_ID" --yes --output none
 
       # --- Staging ---------------------------------------------------------------------------
 
