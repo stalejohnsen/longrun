@@ -122,11 +122,13 @@ The CI migration job must reach the database. Options (temporary firewall rule f
 
 Mapping identities to database roles (`pgaadauth_create_principal…`) and granting the pipeline identity access are role assignments. They need explicit approval and a runbook.
 
-### To verify in the skeleton task
+### Verified in the skeleton task (PR B)
 
-- Loading `.ts` migrations with Node 24 type stripping.
-- The exact `pg` behaviour of an async `password` function with `Pool`.
-- The exact functions for mapping a managed identity to a Postgres role.
+- **Loading `.ts` migrations with Node 24 type stripping works.** `node scripts/migrate.ts` runs against a real Postgres in `test/db/migrate.int.test.ts`.
+  - Since Kysely 0.29, `Migrator` and `FileMigrationProvider` are exported from `kysely/migration`, not `kysely`.
+  - On Windows, migration files must be imported via `file://` URLs (a custom `import` function).
+- **`pg` calls an async `password` function once per new client**, and `Pool` creates a new client for each connection (`test/db/pool.int.test.ts`). The resolved password is cached on that client, so connections are recycled after 30 minutes (`maxLifetimeSeconds`), well within the token lifetime.
+- Still open (infrastructure phase): the exact functions for mapping a managed identity to a Postgres role.
 
 ## Follow-up
 

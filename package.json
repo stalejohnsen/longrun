@@ -18,13 +18,18 @@
     "test": "vitest run --project unit --project component",
     "test:integration": "vitest run --project integration",
     "test:e2e": "playwright test",
-    "test:all": "npm run test && npm run test:integration && npm run test:e2e"
+    "test:all": "npm run test && npm run test:integration && npm run test:e2e",
+    "db:migrate": "node scripts/migrate.ts",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@azure/identity": "4.13.3",
+    "kysely": "0.29.6",
     "next": "16.3.6",
     "pg": "8.23.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

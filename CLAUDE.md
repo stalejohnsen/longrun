@@ -41,8 +41,10 @@ Requires Node 24 (>= 24.15; see `.node-version`) and Docker (for Testcontainers)
 - Unit and component tests: `npm test`
 - Integration tests (Testcontainers Postgres): `npm run test:integration`
 - End-to-end tests (production build, Playwright): `npm run test:e2e` (first time: `npx playwright install chromium`)
+- Unit, component and integration tests with coverage thresholds (as in CI): `npm run test:coverage`
 - All tests: `npm run test:all`
-- Run locally: `npm run dev`; production bundle: `npm run build && npm start`
+- Apply migrations: `npm run db:migrate` (see `docs/runbooks/local-development.md`)
+- Run locally: `npm run dev` (configuration in `docs/runbooks/local-development.md`); production bundle: `npm run build && npm start`
 
 Run lint, typecheck and all tests before declaring a task done.
 
