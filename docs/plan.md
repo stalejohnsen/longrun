@@ -1,7 +1,7 @@
 # Longrun – plan
 
 Status: draft
-Last updated: 2026-09-26
+Last updated: 2026-09-27
 
 ## Background
 
@@ -15,6 +15,7 @@ Longrun is a small lifecycle register. Users record the components they use and 
 - Show which registered components reach end of support within a window the user chooses (typically 6–12 months).
 - Run on Azure with a secure-by-default setup: Entra ID sign-in, managed identity to the database, no secrets in code or pipeline.
 - Deliver every change through spec, PR, CI and automated deployment.
+- Show, with recorded evidence, whether an AI-generated codebase stays maintainable end to end over time: dependency updates, CVE patching and major upgrades ([spec 0003](../specs/0003-maintenance-and-supply-chain.md)).
 
 ## Non-goals
 
@@ -94,6 +95,16 @@ Spec [0002](../specs/0002-deployment.md), ADR [0007](adr/0007-infrastructure-and
 
 - Look up end-of-support dates from endoflife.date when the product is supported; manual entry otherwise.
 - View of components reaching end of support within a user-chosen window.
+
+### Phase 6 – Maintenance and supply-chain security
+
+Spec [0003](../specs/0003-maintenance-and-supply-chain.md), ADR [0008](adr/0008-dependency-updates-and-supply-chain.md). No app features. Five PRs:
+
+1. ADR 0008 and spec 0003.
+2. GitHub settings runbook (public repository, security features, ruleset, environment reviewers).
+3. `.npmrc` `min-release-age`, Dependabot configuration, auto-merge workflow.
+4. CI gates: `npm audit`, `npm audit signatures`, zizmor.
+5. Runbooks (security patch, major upgrade, monthly review) and the maintenance log.
 
 ## Quality bar
 
