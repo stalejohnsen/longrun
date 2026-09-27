@@ -1,7 +1,8 @@
 name: Deploy
 
-# Spec 0002, ADR 0007. Started manually on `main` by the owner: that click is the approval
-# (GitHub has no environment reviewers for private repositories on this plan).
+# Spec 0002, ADR 0007. Started manually on `main` by the owner. build → staging (infra,
+# migrations, staging slot, verification) → production (owner approval in the `production`
+# environment, then swap). The owner reviews staging before approving.
 on:
   workflow_dispatch:
     inputs:
@@ -83,15 +84,23 @@ jobs:
           path: app.zip
           retention-days: 7
 
-  deploy:
+  # Infrastructure, migrations and the staging slot. Runs without a reviewer: only the owner can
+  # start this workflow, and only on main with green CI. Production is untouched until the swap.
+  staging:
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    # The only OIDC subject the pipeline identity trusts (infra/bootstrap).
-    environment: production
+    # OIDC subject environment:staging (infra/bootstrap).
+    environment:
+      name: staging
+      url: ${{ steps.infra.outputs.staging_url }}
     permissions:
       contents: read
       id-token: write
+    outputs:
+      web_app: ${{ steps.infra.outputs.web_app }}
+      staging_host: ${{ steps.infra.outputs.staging_host }}
+      production_host: ${{ steps.infra.outputs.production_host }}
     env:
       RESOURCE_GROUP: rg-longrun
       SHA: ${{ github.sha }}
@@ -126,7 +135,38 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      # The runtime reaches production only through the swap (the Node.js version is swapped with
+      # the slot). Staging gets the desired version from .node-version; production keeps what it
+      # runs now. On the first deployment there is no production yet, so both get the desired one.
+      - name: Resolve runtime versions
+        id: runtime
+        run: |
+          set -euo pipefail
+          major=$(cut -d. -f1 .node-version | tr -d '[:space:]')
+          desired="NODE|${major}-lts"
+          app=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[0].name" --output tsv)
+          current=""
+          if [ -n "$app" ]; then
+            current=$(az webapp config show --resource-group "$RESOURCE_GROUP" --name "$app" \
+              --query linuxFxVersion --output tsv)
+          fi
+          current=${current:-$desired}
+          for value in "$desired" "$current"; do
+            if ! [[ "$value" =~ ^NODE\|[0-9]+-lts$ ]]; then
+              echo "::error::Unexpected runtime value '$value'"
+              exit 1
+            fi
+          done
+          echo "Production runtime: $current; staging runtime: $desired"
+          {
+            echo "production=$current"
+            echo "staging=$desired"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Preview infrastructure changes
+        env:
+          PRODUCTION_RUNTIME: ${{ steps.runtime.outputs.production }}
+          STAGING_RUNTIME: ${{ steps.runtime.outputs.staging }}
         run: |
           az deployment group what-if \
             --resource-group "$RESOURCE_GROUP" \
@@ -135,10 +175,15 @@ jobs:
               postgresAdminObjectId="$POSTGRES_ADMIN_OBJECT_ID" \
               postgresAdminPrincipalName="$POSTGRES_ADMIN_NAME" \
               productionAuthClientId="$AUTH_CLIENT_ID_PRODUCTION" \
-              stagingAuthClientId="$AUTH_CLIENT_ID_STAGING"
+              stagingAuthClientId="$AUTH_CLIENT_ID_STAGING" \
+              productionRuntime="$PRODUCTION_RUNTIME" \
+              stagingRuntime="$STAGING_RUNTIME"
 
       - name: Deploy infrastructure
         id: infra
+        env:
+          PRODUCTION_RUNTIME: ${{ steps.runtime.outputs.production }}
+          STAGING_RUNTIME: ${{ steps.runtime.outputs.staging }}
         run: |
           set -euo pipefail
           outputs=$(az deployment group create \
@@ -150,13 +195,17 @@ jobs:
               postgresAdminPrincipalName="$POSTGRES_ADMIN_NAME" \
               productionAuthClientId="$AUTH_CLIENT_ID_PRODUCTION" \
               stagingAuthClientId="$AUTH_CLIENT_ID_STAGING" \
+              productionRuntime="$PRODUCTION_RUNTIME" \
+              stagingRuntime="$STAGING_RUNTIME" \
             --query properties.outputs --output json)
+          staging_host=$(jq -r .stagingHostName.value <<<"$outputs")
           {
             echo "web_app=$(jq -r .webAppName.value <<<"$outputs")"
             echo "postgres_server=$(jq -r .postgresServerName.value <<<"$outputs")"
             echo "postgres_host=$(jq -r .postgresHost.value <<<"$outputs")"
             echo "database=$(jq -r .databaseName.value <<<"$outputs")"
-            echo "staging_host=$(jq -r .stagingHostName.value <<<"$outputs")"
+            echo "staging_host=$staging_host"
+            echo "staging_url=https://$staging_host"
             echo "production_host=$(jq -r .productionHostName.value <<<"$outputs")"
           } >> "$GITHUB_OUTPUT"
 
@@ -241,8 +290,7 @@ jobs:
           echo "::error::Staging did not serve $SHA within 10 minutes"
           exit 1
 
-      # Spec 0002 D7: sign-in enforced, and app + database healthy, before the swap. The swap
-      # itself is also guarded: App Service warms up /health and stops unless it returns 200.
+      # Spec 0002 D7: sign-in enforced, and app + database healthy, before the owner is asked.
       - name: Verify staging
         if: env.FULL == 'true'
         env:
@@ -256,25 +304,72 @@ jobs:
             echo "::error::Staging /health did not report ok"
             exit 1
           fi
-          echo "Staging verified"
+          echo "Staging verified. Review https://$HOST, then approve the production job to swap."
 
-      # --- Production ------------------------------------------------------------------------
+  # Spec 0002 D4: the owner approves here, after reviewing staging. The job waits (without a
+  # runner) until approved or rejected; rejecting leaves production untouched.
+  production:
+    needs: staging
+    if: inputs.mode == 'full'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # OIDC subject environment:production (infra/bootstrap); the owner is required reviewer.
+    environment:
+      name: production
+      url: https://${{ needs.staging.outputs.production_host }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RESOURCE_GROUP: rg-longrun
+      SHA: ${{ github.sha }}
+      WEB_APP: ${{ needs.staging.outputs.web_app }}
+      STAGING_HOST: ${{ needs.staging.outputs.staging_host }}
+      PRODUCTION_HOST: ${{ needs.staging.outputs.production_host }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
+      # The approval may come much later; swap only if staging still serves the reviewed build.
+      - name: Check staging still serves this build
+        run: |
+          set -euo pipefail
+          version=$(curl -fsS --max-time 10 "https://$STAGING_HOST/health" | jq -r '.version // empty')
+          if [ "$version" != "$SHA" ]; then
+            echo "::error::Staging serves '$version', not the reviewed $SHA. Start a new deploy."
+            exit 1
+          fi
+
+      - name: Azure login (OIDC, no credentials)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # App Service warms up /health on the staging slot and stops the swap unless it returns 200.
       - name: Swap staging into production
-        if: env.FULL == 'true'
-        env:
-          WEB_APP: ${{ steps.infra.outputs.web_app }}
         run: |
           az webapp deployment slot swap \
             --resource-group "$RESOURCE_GROUP" \
             --name "$WEB_APP" \
             --slot staging --target-slot production
 
-      - name: Verify production requires sign-in
-        if: env.FULL == 'true'
+      - name: Verify production
         env:
-          HOST: ${{ steps.infra.outputs.production_host }}
           TENANT: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           set -euo pipefail
-          bash scripts/ci/check-signin-required.sh "$HOST" "$TENANT"
+          bash scripts/ci/check-signin-required.sh "$PRODUCTION_HOST" "$TENANT"
+          for attempt in $(seq 1 12); do
+            version=$(curl -fsS --max-time 10 "https://$PRODUCTION_HOST/health" | jq -r '.version // empty' 2>/dev/null || true)
+            if [ "$version" = "$SHA" ]; then
+              echo "Production serves $SHA"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Production serves '$version' after the swap, expected $SHA"
+          exit 1

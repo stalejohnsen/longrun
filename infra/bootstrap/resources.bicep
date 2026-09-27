@@ -12,7 +12,7 @@ param location string
 param githubRepository string
 param githubOwnerId string
 param githubRepositoryId string
-param githubEnvironment string
+param githubEnvironments string[]
 param monthlyBudget int
 param budgetStartDate string
 param budgetContactEmails string[]
@@ -34,22 +34,26 @@ resource pipelineIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024
 }
 
 
-// GitHub Actions OIDC: only jobs in the given environment of this repository may sign in.
+// GitHub Actions OIDC: only jobs in the given environments of this repository may sign in.
 // Repositories created after 2026-07-15 use immutable subject claims with owner and repository
 // IDs, so a recreated repository with the same name cannot sign in.
 var githubOwner = split(githubRepository, '/')[0]
 var githubRepoName = split(githubRepository, '/')[1]
-var githubSubject = 'repo:${githubOwner}@${githubOwnerId}/${githubRepoName}@${githubRepositoryId}:environment:${githubEnvironment}'
+var githubSubjectPrefix = 'repo:${githubOwner}@${githubOwnerId}/${githubRepoName}@${githubRepositoryId}:environment:'
 
-resource githubFederatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2024-11-30' = {
-  parent: pipelineIdentity
-  name: 'github-${githubEnvironment}'
-  properties: {
-    issuer: 'https://token.actions.githubusercontent.com'
-    subject: githubSubject
-    audiences: [tokenExchangeAudience]
+// Federated credentials on one identity cannot be written concurrently, so one at a time.
+@batchSize(1)
+resource githubFederatedCredentials 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2024-11-30' = [
+  for environment in githubEnvironments: {
+    parent: pipelineIdentity
+    name: 'github-${environment}'
+    properties: {
+      issuer: 'https://token.actions.githubusercontent.com'
+      subject: '${githubSubjectPrefix}${environment}'
+      audiences: [tokenExchangeAudience]
+    }
   }
-}
+]
 
 // --- App registrations for App Service built-in auth (ADR 0002) ------------------------
 // One per slot. Each trusts its slot's managed identity as credential: no client secret.

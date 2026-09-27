@@ -21,7 +21,7 @@ Follow `docs/runbooks/database-bootstrap.md`. It ends by removing your temporary
 
 GitHub → Actions → **Deploy** → Run workflow → branch `main`, mode **`full`**.
 
-The job runs migrations, deploys to staging, waits for the new build, verifies staging (sign-in redirect and `/health` through built-in auth), swaps, and checks that production requires sign-in.
+The `staging` job runs migrations, deploys to staging, waits for the new build and verifies staging (sign-in redirect and `/health` through built-in auth). The `production` job then waits for your approval: open the staging URL on the run page, check it, and approve. It swaps and checks that production requires sign-in and serves the new build.
 
 ## 4. Confirm the open items from the secure baseline (PR B)
 
@@ -34,6 +34,6 @@ Record each outcome in `docs/learnings.md`. Fix ADR 0002 if anything differs.
 | `allowedApplications` with browser sign-in      | Same as above                                                                                                                                                                           | No 403 from App Service after sign-in                                                             |
 | Health-ping headers                             | `az monitor metrics list --resource $(az webapp show -g rg-longrun -n <web-app> --query id -o tsv) --metric HealthCheckStatus --interval PT5M -o table` about 15 minutes after the swap | Values of 100 (healthy)                                                                           |
 | Temporary firewall rules removed (spec 0002 D6) | `az postgres flexible-server firewall-rule list -g rg-longrun --server-name <server> --query "[].name" -o tsv`                                                                          | No `ci-migration-*` or `owner-bootstrap` rules (and, after the one-time cleanup, no rules at all) |
-| No secrets (spec 0002 D9)                       | `gh secret list` and `gh secret list --env production`                                                                                                                                  | Empty                                                                                             |
+| No secrets (spec 0002 D9)                       | `gh secret list`, `gh secret list --env staging` and `gh secret list --env production`                                                                                                  | Empty                                                                                             |
 
 If sign-in shows `Unauthorized` (401 from the app), App Service authenticated you but the app could not read your object ID. Check the claim names in `/.auth/me` in the browser and adjust `src/lib/auth/principal.ts` with a test.

@@ -17,8 +17,8 @@ param githubOwnerId string = '98233333'
 @description('Immutable numeric ID of the repository (gh api repos/OWNER/REPO -q .id).')
 param githubRepositoryId string = '1389214305'
 
-@description('GitHub environment the deploy job runs in; the only OIDC subject trusted.')
-param githubEnvironment string = 'production'
+@description('GitHub environments the deploy jobs run in; the only OIDC subjects trusted. staging: infra, migrations and the staging slot; production: the swap after owner approval (spec 0002).')
+param githubEnvironments string[] = ['production', 'staging']
 
 @description('Monthly budget in the billing currency.')
 @minValue(1)
@@ -44,7 +44,7 @@ module resources 'resources.bicep' = {
     githubRepository: githubRepository
     githubOwnerId: githubOwnerId
     githubRepositoryId: githubRepositoryId
-    githubEnvironment: githubEnvironment
+    githubEnvironments: githubEnvironments
     monthlyBudget: monthlyBudget
     budgetStartDate: budgetStartDate
     budgetContactEmails: budgetContactEmails

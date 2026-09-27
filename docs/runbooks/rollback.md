@@ -1,6 +1,6 @@
 # Rollback (owner)
 
-After a swap, the `staging` slot holds the previous production version (spec 0002 D11). Rolling back is the same swap again. Migrations are expand/contract (ADR 0004), so the previous version still works with the current database schema.
+After a swap, the `staging` slot holds the previous production version (spec 0002 D11). Rolling back is the same swap again. The Node.js runtime is swapped with the slot, so a rollback after a runtime upgrade also returns production to the previous runtime. Migrations are expand/contract (ADR 0004), so the previous version still works with the current database schema.
 
 ## Swap back
 

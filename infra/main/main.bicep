@@ -25,6 +25,14 @@ param productionAuthClientId string
 @description('Client ID of the staging built-in auth app registration (bootstrap output).')
 param stagingAuthClientId string
 
+// The Node.js version is swapped with the slot (App Service "which settings are swapped"), so a
+// new runtime reaches production only through the swap, after the owner has seen it on staging.
+@description('Runtime the production slot runs now, read from Azure by the deploy workflow; unchanged by this deployment.')
+param productionRuntime string
+
+@description('Runtime for the staging slot: the desired version, from .node-version.')
+param stagingRuntime string
+
 var tenantId = tenant().tenantId
 var appName = webAppName(subscription().subscriptionId)
 var serverName = postgresServerName(subscription().subscriptionId)
@@ -129,8 +137,8 @@ resource plan 'Microsoft.Web/serverfarms@2024-11-01' = {
   }
 }
 
+// Shared by both slots; linuxFxVersion is set per slot below.
 var siteConfig = {
-  linuxFxVersion: 'NODE|24-lts'
   appCommandLine: 'node server.js'
   alwaysOn: true
   healthCheckPath: '/health'
@@ -155,7 +163,7 @@ resource webApp 'Microsoft.Web/sites@2024-11-01' = {
     httpsOnly: true
     clientAffinityEnabled: false
     publicNetworkAccess: 'Enabled'
-    siteConfig: siteConfig
+    siteConfig: union(siteConfig, { linuxFxVersion: productionRuntime })
   }
 }
 
@@ -175,7 +183,7 @@ resource stagingSlot 'Microsoft.Web/sites/slots@2024-11-01' = {
     httpsOnly: true
     clientAffinityEnabled: false
     publicNetworkAccess: 'Enabled'
-    siteConfig: siteConfig
+    siteConfig: union(siteConfig, { linuxFxVersion: stagingRuntime })
   }
 }
 

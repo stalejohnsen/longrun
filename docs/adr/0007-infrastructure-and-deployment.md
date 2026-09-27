@@ -94,6 +94,15 @@ The pipeline never gets Microsoft Graph permissions or the right to assign roles
 
 Started **manually** by the owner on `main` (`workflow_dispatch`); the manual start is the approval. It refuses commits whose CI didn't succeed and runs in GitHub environment `production`, the only OIDC subject trusted. _(Amended 2026-09-26: environment reviewers are not available for private repositories on the owner's GitHub plan, so the approval is the manual start.)_
 
+_(Amended 2026-09-27: the repository is public (ADR 0008), so environment reviewers are available. The workflow now has two Azure jobs:_
+
+- _`staging`, in GitHub environment `staging` with no reviewer, runs infrastructure, migrations, the staging deployment and verification._
+- _`production`, in GitHub environment `production` with the owner as required reviewer, swaps and verifies._
+
+_The pipeline identity trusts both OIDC subjects (`environment:staging`, `environment:production`); its role assignment is unchanged. The owner reviews staging before approving the swap. The trade-off is that infrastructure and migrations run before the approval. Only the owner can start a deploy, only on `main` with green CI, and migrations are backward compatible, so a rejected swap leaves production working._
+
+_The Node.js runtime is set per slot: staging gets `.node-version`, production keeps its current value, and the swap carries the runtime to production (App Service swaps the Node.js version with the slot).)_
+
 1. Build the standalone bundle once, with `DEPLOYMENT_ID` set to the commit SHA.
 2. Run `what-if` on `infra/main`, then deploy it.
 3. Run migrations (see below).

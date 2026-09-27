@@ -132,22 +132,29 @@ fi
 rm ruleset.json
 ```
 
-## 5. `production` environment
+## 5. `staging` and `production` environments
 
-Require your approval for every deployment, and allow deployments only from `main` (spec 0002 D4, spec 0003):
+Both environments allow deployments only from `main`. `production` requires your approval; it guards the swap, after you have reviewed staging (spec 0002 D4, spec 0003). `staging` has no reviewer: the `staging` job runs infrastructure, migrations and the staging slot for a deploy you started.
 
 ```sh
+gh api -X PUT "repos/$REPO/environments/staging" --input - <<'JSON'
+{ "deployment_branch_policy": { "protected_branches": false, "custom_branch_policies": true } }
+JSON
 gh api -X PUT "repos/$REPO/environments/production" --input - <<JSON
 {
   "reviewers": [{ "type": "User", "id": $(gh api user -q .id) }],
   "deployment_branch_policy": { "protected_branches": false, "custom_branch_policies": true }
 }
 JSON
-gh api "repos/$REPO/environments/production/deployment-branch-policies" --jq '.branch_policies[].name' | grep -qx main \
-  || gh api -X POST "repos/$REPO/environments/production/deployment-branch-policies" -f name=main -f type=branch
+for env in staging production; do
+  gh api "repos/$REPO/environments/$env/deployment-branch-policies" --jq '.branch_policies[].name' | grep -qx main \
+    || gh api -X POST "repos/$REPO/environments/$env/deployment-branch-policies" -f name=main -f type=branch
+done
 ```
 
-When you start the deploy workflow, the `deploy` job then waits until you approve it in the run's page.
+Each environment needs its identifiers as environment secrets. They are set from the bootstrap outputs in [bootstrap.md](bootstrap.md), section 5: seven in `staging`, three (`AZURE_*`) in `production`.
+
+When you start the deploy workflow, the `staging` job runs straight away. The `production` job then waits on the run's page. Open the staging URL shown there, check the new version, then approve to swap, or reject to leave production untouched.
 
 ## 6. Verify
 
@@ -159,7 +166,7 @@ gh api "repos/$REPO/code-scanning/default-setup" --jq '{state, languages}'
 gh api "repos/$REPO/actions/permissions"
 gh api "repos/$REPO/actions/permissions/workflow"
 gh api "repos/$REPO/rulesets" --jq '.[] | {name, enforcement}'
-gh api "repos/$REPO/environments/production" --jq '{protection_rules: [.protection_rules[].type], deployment_branch_policy}'
+for env in staging production; do gh api "repos/$REPO/environments/$env" --jq '{name, protection_rules: [.protection_rules[].type], deployment_branch_policy}'; done   # production: required_reviewers + branch_policy; staging: branch_policy
 ```
 
 Then check that `main` rejects a direct push (spec 0003 M6):

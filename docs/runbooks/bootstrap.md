@@ -66,7 +66,7 @@ az deployment sub what-if \
 Review the output. Expect:
 
 - 1 resource group and 3 managed identities;
-- 1 federated credential with subject `repo:stalejohnsen@98233333/longrun@1389214305:environment:production`;
+- 2 federated credentials on `id-longrun-pipeline`, with subjects `repo:stalejohnsen@98233333/longrun@1389214305:environment:production` and `…:environment:staging`;
 - 2 app registrations, each with 1 federated credential, and 2 service principals;
 - 1 role assignment (`Contributor` on `rg-longrun` for `id-longrun-pipeline`);
 - 1 budget.
@@ -85,7 +85,7 @@ az deployment sub create \
 
 If the deployment fails with a replication error on a federated credential or service principal, wait a minute and run the same command again (Entra replication delay).
 
-## 5. Configure the GitHub `production` environment
+## 5. Configure the GitHub `staging` and `production` environments
 
 Read the outputs:
 
@@ -93,17 +93,12 @@ Read the outputs:
 az deployment sub show --name longrun-bootstrap --query properties.outputs -o json
 ```
 
-Create the environment with yourself as required reviewer (spec 0002 D4). The reviewer and branch policy take effect only on a public repository; the other repository settings are in [github-settings.md](github-settings.md):
+Create both environments with section 5 of [github-settings.md](github-settings.md):
 
-```sh
-gh api -X PUT repos/stalejohnsen/longrun/environments/production --input - <<JSON
-{
-  "reviewers": [{ "type": "User", "id": $(gh api user -q .id) }],
-  "deployment_branch_policy": { "protected_branches": false, "custom_branch_policies": true }
-}
-JSON
-gh api -X POST repos/stalejohnsen/longrun/environments/production/deployment-branch-policies -f name=main -f type=branch
-```
+- `staging`: deployments from `main` only, no reviewer.
+- `production`: deployments from `main` only, with you as required reviewer (spec 0002 D4).
+
+Reviewers and branch policies take effect only on a public repository.
 
 Store the identifiers as **environment secrets**. They are not credentials; they are secrets only so that GitHub masks them in workflow logs, which would be public if the repository were (spec 0002 D9, ADR 0007). The values are read straight from the deployment outputs, so there is nothing to copy by hand (a hand-copied value once lost a character and broke the staging token request). `POSTGRES_ADMIN_*` makes you the database's Entra administrator, for the database bootstrap only (ADR 0007):
 
@@ -111,22 +106,27 @@ Store the identifiers as **environment secrets**. They are not credentials; they
 output() {
   az deployment sub show --name longrun-bootstrap --query "properties.outputs.$1.value" -o tsv | tr -d '\r'
 }
-set_id() {
-  [ -n "$2" ] || { echo "Empty value for $1; is the bootstrap deployment complete?"; return 1; }
-  printf '%s' "$2" | gh secret set "$1" --env production
+set_id() { # environment, name, value
+  [ -n "$3" ] || { echo "Empty value for $2; is the bootstrap deployment complete?"; return 1; }
+  printf '%s' "$3" | gh secret set "$2" --env "$1"
 }
-set_id AZURE_TENANT_ID "$(output tenantId)"
-set_id AZURE_SUBSCRIPTION_ID "$(output subscriptionId)"
-set_id AZURE_CLIENT_ID "$(output pipelineClientId)"
-set_id AUTH_CLIENT_ID_PRODUCTION "$(output productionAuthClientId)"
-set_id AUTH_CLIENT_ID_STAGING "$(output stagingAuthClientId)"
-set_id POSTGRES_ADMIN_OBJECT_ID "$(az ad signed-in-user show --query id -o tsv | tr -d '\r')"
-set_id POSTGRES_ADMIN_NAME "$(az ad signed-in-user show --query userPrincipalName -o tsv | tr -d '\r')"
+# Both deploy jobs sign in to Azure.
+for env in staging production; do
+  set_id "$env" AZURE_TENANT_ID "$(output tenantId)"
+  set_id "$env" AZURE_SUBSCRIPTION_ID "$(output subscriptionId)"
+  set_id "$env" AZURE_CLIENT_ID "$(output pipelineClientId)"
+done
+# Only the staging job deploys infrastructure, so only it gets these.
+set_id staging AUTH_CLIENT_ID_PRODUCTION "$(output productionAuthClientId)"
+set_id staging AUTH_CLIENT_ID_STAGING "$(output stagingAuthClientId)"
+set_id staging POSTGRES_ADMIN_OBJECT_ID "$(az ad signed-in-user show --query id -o tsv | tr -d '\r')"
+set_id staging POSTGRES_ADMIN_NAME "$(az ad signed-in-user show --query userPrincipalName -o tsv | tr -d '\r')"
 ```
 
-Secret values cannot be read back. Check that all seven names exist; a wrong value makes the next deployment fail at Azure login or at the staging sign-in check:
+Secret values cannot be read back. Check the names: seven in `staging`, and only the three `AZURE_*` in `production`. A wrong value makes the next deployment fail at Azure login or at the staging sign-in check:
 
 ```sh
+gh secret list --env staging
 gh secret list --env production
 ```
 
