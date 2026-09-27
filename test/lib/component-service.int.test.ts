@@ -399,6 +399,7 @@ describe('look up again (AC7a)', () => {
       const outcome = await lookUpAgain(d, existing.id)
       expect(outcome).toMatchObject({
         ok: false,
+        reason: result.kind,
         message: expect.stringMatching(/stored date is kept/),
       })
       expect((await getComponent(db, existing.id))?.endOfSupport).toMatchObject({
@@ -412,6 +413,7 @@ describe('look up again (AC7a)', () => {
     const { deps: d, lookUp } = deps()
     expect(await lookUpAgain(d, existing.id)).toMatchObject({
       ok: false,
+      reason: 'no-eol',
       message: 'This component has no endoflife.date product and release.',
     })
     expect(lookUp).not.toHaveBeenCalled()

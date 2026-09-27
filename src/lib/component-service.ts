@@ -203,33 +203,35 @@ export async function editComponent(
     : { ok: false, notFound: true }
 }
 
+export type LookUpAgainFailure = 'no-eol' | 'no-date' | 'not-found' | 'unavailable'
+
+export const LOOK_UP_AGAIN_MESSAGES: Record<LookUpAgainFailure, string> = {
+  'no-eol': 'This component has no endoflife.date product and release.',
+  'no-date':
+    'endoflife.date has no announced end of support for this release. The stored date is kept.',
+  'not-found': `${MESSAGES.notFoundOnEndOfLife} The stored date is kept.`,
+  unavailable: `${MESSAGES.lookupUnavailable} The stored date is kept.`,
+}
+
 export type LookUpAgainResult =
   | { ok: true; component: Component; changed: boolean }
   | { ok: false; notFound: true }
-  | { ok: false; message: string; component: Component }
+  | { ok: false; reason: LookUpAgainFailure; message: string; component: Component }
 
 // Spec 0001 decision Q4 / AC7a: re-run the lookup for the stored product and release.
 // A found date replaces the stored one and updates the lookup time; any other outcome keeps it.
 export async function lookUpAgain(deps: ServiceDeps, id: string): Promise<LookUpAgainResult> {
   const existing = await getComponent(deps.db, id)
   if (!existing) return { ok: false, notFound: true }
-  if (!existing.eol) {
-    return {
-      ok: false,
-      message: 'This component has no endoflife.date product and release.',
-      component: existing,
-    }
-  }
+  const failed = (reason: LookUpAgainFailure): LookUpAgainResult => ({
+    ok: false,
+    reason,
+    message: LOOK_UP_AGAIN_MESSAGES[reason],
+    component: existing,
+  })
+  if (!existing.eol) return failed('no-eol')
   const result = await deps.lookUp(existing.eol.product, existing.eol.release)
-  if (result.kind !== 'found') {
-    const message =
-      result.kind === 'no-date'
-        ? 'endoflife.date has no announced end of support for this release. The stored date is kept.'
-        : result.kind === 'not-found'
-          ? `${MESSAGES.notFoundOnEndOfLife} The stored date is kept.`
-          : `${MESSAGES.lookupUnavailable} The stored date is kept.`
-    return { ok: false, message, component: existing }
-  }
+  if (result.kind !== 'found') return failed(result.kind)
   const changed = existing.endOfSupport?.date !== result.date
   const updated = await updateComponent(deps.db, id, {
     name: existing.name,

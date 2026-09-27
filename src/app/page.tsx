@@ -9,6 +9,12 @@ const NOTICES: Record<string, string> = {
   registered: 'Component registered.',
   'registered-no-date':
     'Component registered. endoflife.date has no announced end of support for this release, so it has no date yet.',
+  updated: 'Component updated.',
+  'updated-no-date':
+    'Component updated. endoflife.date has no announced end of support for this release, so it has no date yet.',
+  deleted: 'Component deleted.',
+  // Spec 0001 E8: edited or deleted by someone else in the meantime.
+  'not-found': 'That component no longer exists.',
 }
 
 function source(component: Component): string {
@@ -49,6 +55,9 @@ export default async function ComponentListPage({
               <th scope="col">Owner</th>
               <th scope="col">End of support</th>
               <th scope="col">Source</th>
+              <th scope="col">
+                <span className="visually-hidden">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -60,6 +69,14 @@ export default async function ComponentListPage({
                 <td>{component.owner}</td>
                 <td>{component.endOfSupport?.date ?? 'Unknown'}</td>
                 <td>{source(component)}</td>
+                <td className="actions">
+                  <Link href={`/components/${component.id}/edit`}>
+                    Edit<span className="visually-hidden"> {component.name}</span>
+                  </Link>{' '}
+                  <Link href={`/components/${component.id}/delete`}>
+                    Delete<span className="visually-hidden"> {component.name}</span>
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>
