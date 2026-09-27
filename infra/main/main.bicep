@@ -25,18 +25,11 @@ param productionAuthClientId string
 @description('Client ID of the staging built-in auth app registration (bootstrap output).')
 param stagingAuthClientId string
 
-@description('Identifier URI of the staging app registration (bootstrap output).')
-param stagingAuthAudience string
-
 var tenantId = tenant().tenantId
 var appName = webAppName(subscription().subscriptionId)
 var serverName = postgresServerName(subscription().subscriptionId)
 
 // --- Identities from bootstrap ------------------------------------------------------------
-
-resource pipelineIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = {
-  name: identityNames.pipeline
-}
 
 resource productionIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = {
   name: identityNames.appProduction
@@ -197,6 +190,10 @@ var commonSettings = {
   APPLICATIONINSIGHTS_CONNECTION_STRING: appInsights.properties.ConnectionString
   // Node.js autoinstrumentation on Linux is public preview (ADR 0007 follow-up).
   ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
+  // Before a swap, App Service warms up the source slot at this path and stops the swap unless
+  // it returns 200 (staging slots docs). /health returns 503 when the database is unreachable.
+  WEBSITE_SWAP_WARMUP_PING_PATH: '/health'
+  WEBSITE_SWAP_WARMUP_PING_STATUSES: '200'
 }
 
 // Slot-sticky settings: each slot keeps its own identity and database role on swap.
@@ -259,12 +256,15 @@ resource stagingScm 'Microsoft.Web/sites/slots/basicPublishingCredentialsPolicie
 
 var openIdIssuer = '${environment().authentication.loginEndpoint}${tenantId}/v2.0'
 
-func authSettings(clientId string, issuer string, audiences string[], allowedApplications string[]) object => {
+func authSettings(clientId string, issuer string) object => {
   platform: { enabled: true }
   globalValidation: {
     requireAuthentication: true
     unauthenticatedClientAction: 'RedirectToLoginPage'
     redirectToProvider: 'azureactivedirectory'
+    // The health endpoint is the one anonymous route (CLAUDE.md): App Service warm-up before a
+    // swap and the pipeline smoke test call it without an identity (ADR 0002 amendment).
+    excludedPaths: ['/health']
   }
   httpSettings: {
     requireHttps: true
@@ -283,9 +283,10 @@ func authSettings(clientId string, issuer string, audiences string[], allowedApp
         clientSecretSettingName: 'OVERRIDE_USE_MI_FIC_ASSERTION_CLIENTID'
       }
       validation: {
-        allowedAudiences: audiences
+        allowedAudiences: [clientId]
+        // Only the slot's own app registration; no other application can call the app.
         defaultAuthorizationPolicy: {
-          allowedApplications: allowedApplications
+          allowedApplications: [clientId]
         }
       }
     }
@@ -295,19 +296,13 @@ func authSettings(clientId string, issuer string, audiences string[], allowedApp
 resource productionAuth 'Microsoft.Web/sites/config@2024-11-01' = {
   parent: webApp
   name: 'authsettingsV2'
-  properties: authSettings(productionAuthClientId, openIdIssuer, [productionAuthClientId], [productionAuthClientId])
+  properties: authSettings(productionAuthClientId, openIdIssuer)
 }
 
-// Staging also accepts the pipeline identity so it can verify /health before the swap (ADR 0007).
 resource stagingAuth 'Microsoft.Web/sites/slots/config@2024-11-01' = {
   parent: stagingSlot
   name: 'authsettingsV2'
-  properties: authSettings(
-    stagingAuthClientId,
-    openIdIssuer,
-    [stagingAuthClientId, stagingAuthAudience],
-    [stagingAuthClientId, pipelineIdentity.properties.clientId]
-  )
+  properties: authSettings(stagingAuthClientId, openIdIssuer)
 }
 
 // --- Private network path from the app to PostgreSQL (ADR 0007) ---------------------------

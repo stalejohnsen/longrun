@@ -100,8 +100,8 @@ The system also stores created and updated timestamps. It stores no personal dat
 ### Health endpoint
 
 - `GET /health` returns 200 when the app can reach the database, and 503 otherwise. The body contains no internal details.
-- It is protected by App Service built-in auth like every other route. The platform health check works with that (ADR 0002).
-- The platform's health pings may arrive without a user identity header. `/health` therefore accepts **either** a valid identity header **or** a valid platform health token. The token is the `x-ms-auth-internal-token` header, which must equal the Base64 SHA-256 hash of `WEBSITE_AUTH_ENCRYPTION_KEY` ([health check docs](https://learn.microsoft.com/en-us/azure/app-service/monitor-instances-health-check)). The comparison is constant-time. Which headers the ping actually carries is to be verified on the first deployment.
+- It is the **one anonymous route**: excluded from App Service built-in auth, and allowed without an identity by the app (ADR 0002 amendment, 2026-09-27). The platform health check, the swap warm-up and the pipeline smoke test call it without an identity.
+- The body is `{"status":"ok"|"unavailable","version":"<commit SHA>"}` and nothing else.
 
 ## Acceptance criteria
 
@@ -132,7 +132,7 @@ Each criterion gets at least one automated test (ADR 0003: unit, integration or 
 
 ### Security and platform
 
-- **AC14** Every page, server action and route handler returns 401, or redirects to sign-in through the platform, when there is no valid identity header. `/health` also accepts a valid platform health token, and rejects a wrong or missing one. _(e2e + unit for the header and token helpers)_
+- **AC14** Every page, server action and route handler returns 401, or redirects to sign-in through the platform, when there is no valid identity header. `/health` is the only exception; only the exact path `/health` is anonymous. _(e2e + unit)_
 - **AC15** Security headers and a CSP are present on every response. _(e2e)_
 - **AC16** `/health` returns 200 with the database up and 503 with it down. _(integration)_
 

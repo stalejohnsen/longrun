@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { getUser } from './lib/auth/current-user'
-import { HEALTH_TOKEN_HEADER, isValidHealthToken } from './lib/auth/health-token'
 import { getConfig } from './lib/config'
 import { buildContentSecurityPolicy, createNonce } from './lib/security-headers'
 
@@ -16,11 +15,11 @@ export function proxy(request: NextRequest) {
     upgradeInsecureRequests: config.inAzure,
   })
 
+  // /health is the one anonymous route (CLAUDE.md, ADR 0002 amendment): App Service warm-up
+  // and the pipeline smoke test call it without an identity. It reveals only ok/unavailable
+  // and the build version.
   const isHealth = request.nextUrl.pathname === '/health'
-  const authenticated =
-    getUser(request.headers, config) !== null ||
-    (isHealth &&
-      isValidHealthToken(request.headers.get(HEALTH_TOKEN_HEADER), config.authEncryptionKey))
+  const authenticated = isHealth || getUser(request.headers, config) !== null
 
   if (!authenticated) {
     const response = new NextResponse('Unauthorized', {

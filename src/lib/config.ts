@@ -13,8 +13,6 @@ const configSchema = z
     WEBSITE_SITE_NAME: z.string().min(1).optional(),
     // Injected read-only by App Service when built-in authentication is enabled (ADR 0002).
     WEBSITE_AUTH_ENABLED: flag.optional(),
-    // Used to verify the platform health check token (spec 0001, /health).
-    WEBSITE_AUTH_ENCRYPTION_KEY: z.string().min(1).optional(),
 
     DATABASE_HOST: z.string().min(1),
     DATABASE_PORT: z.coerce.number().int().min(1).max(65535).default(5432),
@@ -78,7 +76,6 @@ const configSchema = z
 
 export type Config = {
   inAzure: boolean
-  authEncryptionKey: string | undefined
   devIdentity: boolean
   database: {
     host: string
@@ -114,7 +111,6 @@ export function parseConfig(env: Record<string, string | undefined>): Config {
   const env_ = result.data
   return {
     inAzure: env_.WEBSITE_SITE_NAME !== undefined,
-    authEncryptionKey: env_.WEBSITE_AUTH_ENCRYPTION_KEY,
     devIdentity: env_.LONGRUN_DEV_IDENTITY,
     database: {
       host: env_.DATABASE_HOST,

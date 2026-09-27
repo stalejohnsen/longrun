@@ -1,8 +1,4 @@
-import { createHash } from 'node:crypto'
 import { expect, test, type APIRequestContext } from '@playwright/test'
-import { E2E_AUTH_ENCRYPTION_KEY } from './constants'
-
-const healthToken = createHash('sha256').update(E2E_AUTH_ENCRYPTION_KEY).digest('base64')
 
 // A context without the default identity header from playwright.config.ts.
 async function anonymous(
@@ -13,10 +9,9 @@ async function anonymous(
 }
 
 test.describe('authentication (AC14)', () => {
-  test('rejects pages and /health without an identity', async ({ playwright, baseURL }) => {
+  test('rejects pages without an identity', async ({ playwright, baseURL }) => {
     const context = await anonymous(playwright, baseURL)
     expect((await context.get('/')).status()).toBe(401)
-    expect((await context.get('/health')).status()).toBe(401)
     expect((await context.get('/does-not-exist')).status()).toBe(401)
     await context.dispose()
   })
@@ -29,26 +24,22 @@ test.describe('authentication (AC14)', () => {
     expect((await context.get('/')).status()).toBe(401)
     await context.dispose()
   })
-
-  test('accepts the platform health token on /health only', async ({ playwright, baseURL }) => {
-    const context = await playwright.request.newContext({
-      baseURL,
-      extraHTTPHeaders: { 'x-ms-auth-internal-token': healthToken },
-    })
-    expect((await context.get('/health')).status()).toBe(200)
-    expect((await context.get('/')).status()).toBe(401)
-    await context.dispose()
-  })
 })
 
-test.describe('health (AC16)', () => {
-  test('reports ok when the database is reachable, without internal details', async ({
-    request,
+test.describe('health (AC16, anonymous per ADR 0002 amendment)', () => {
+  test('reports ok and the build version without an identity, and nothing else', async ({
+    playwright,
+    baseURL,
   }) => {
-    const response = await request.get('/health')
+    const context = await anonymous(playwright, baseURL)
+    const response = await context.get('/health')
     expect(response.status()).toBe(200)
-    expect(await response.json()).toEqual({ status: 'ok' })
+    expect(await response.json()).toEqual({
+      status: 'ok',
+      version: process.env.DEPLOYMENT_ID ?? 'development',
+    })
     expect(response.headers()['cache-control']).toContain('no-store')
+    await context.dispose()
   })
 })
 

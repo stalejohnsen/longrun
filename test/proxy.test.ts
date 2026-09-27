@@ -1,12 +1,7 @@
-import { createHash } from 'node:crypto'
 import { NextRequest } from 'next/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { HEALTH_TOKEN_HEADER } from '../src/lib/auth/health-token'
 import { PRINCIPAL_HEADER } from '../src/lib/auth/principal'
 import { principalHeader } from './helpers/principal'
-
-const encryptionKey = 'test-encryption-key'
-const healthToken = createHash('sha256').update(encryptionKey).digest('base64')
 
 async function loadProxy() {
   // Config is cached per module instance; reload so each test sees its own environment.
@@ -23,7 +18,6 @@ beforeEach(() => {
   vi.stubEnv('DATABASE_NAME', 'longrun')
   vi.stubEnv('DATABASE_USER', 'longrun')
   vi.stubEnv('DATABASE_PASSWORD', 'test')
-  vi.stubEnv('WEBSITE_AUTH_ENCRYPTION_KEY', encryptionKey)
   vi.stubEnv('LONGRUN_DEV_IDENTITY', 'false')
 })
 
@@ -55,18 +49,20 @@ describe('proxy authentication (AC14)', () => {
     expect(proxy(request('/', { [PRINCIPAL_HEADER]: 'forged' })).status).toBe(401)
   })
 
-  test('accepts the platform health token on /health only', async () => {
+  test('/health is anonymous (ADR 0002 amendment) and still gets a CSP', async () => {
     const proxy = await loadProxy()
-    expect(proxy(request('/health', { [HEALTH_TOKEN_HEADER]: healthToken })).status).toBe(200)
-    expect(proxy(request('/', { [HEALTH_TOKEN_HEADER]: healthToken })).status).toBe(401)
+    const response = proxy(request('/health'))
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Content-Security-Policy')).toContain("default-src 'self'")
   })
 
-  test('rejects /health without an identity or with a wrong health token', async () => {
-    const proxy = await loadProxy()
-    expect(proxy(request('/health')).status).toBe(401)
-    const wrong = createHash('sha256').update('wrong').digest('base64')
-    expect(proxy(request('/health', { [HEALTH_TOKEN_HEADER]: wrong })).status).toBe(401)
-  })
+  test.each(['/healthz', '/health/extra', '/Health', '/api/health', '/?health'])(
+    'only the exact /health path is anonymous: %s needs an identity',
+    async (path) => {
+      const proxy = await loadProxy()
+      expect(proxy(request(path)).status).toBe(401)
+    },
+  )
 
   test('accepts the stand-in identity only when enabled', async () => {
     vi.stubEnv('LONGRUN_DEV_IDENTITY', 'true')

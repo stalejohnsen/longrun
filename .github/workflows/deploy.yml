@@ -128,8 +128,7 @@ jobs:
               postgresAdminObjectId="${{ vars.POSTGRES_ADMIN_OBJECT_ID }}" \
               postgresAdminPrincipalName="${{ vars.POSTGRES_ADMIN_NAME }}" \
               productionAuthClientId="${{ vars.AUTH_CLIENT_ID_PRODUCTION }}" \
-              stagingAuthClientId="${{ vars.AUTH_CLIENT_ID_STAGING }}" \
-              stagingAuthAudience="${{ vars.AUTH_AUDIENCE_STAGING }}"
+              stagingAuthClientId="${{ vars.AUTH_CLIENT_ID_STAGING }}"
 
       - name: Deploy infrastructure
         id: infra
@@ -144,7 +143,6 @@ jobs:
               postgresAdminPrincipalName="${{ vars.POSTGRES_ADMIN_NAME }}" \
               productionAuthClientId="${{ vars.AUTH_CLIENT_ID_PRODUCTION }}" \
               stagingAuthClientId="${{ vars.AUTH_CLIENT_ID_STAGING }}" \
-              stagingAuthAudience="${{ vars.AUTH_AUDIENCE_STAGING }}" \
             --query properties.outputs --output json)
           {
             echo "web_app=$(jq -r .webAppName.value <<<"$outputs")"
@@ -211,18 +209,17 @@ jobs:
             --src-path artifact/app.zip --type zip \
             --async false --restart true
 
-      # Spec 0002 E3: wait up to 10 minutes for staging to serve this exact build.
+      # Spec 0002 E3: wait up to 10 minutes for staging to serve this exact build. /health is
+      # anonymous (ADR 0002 amendment) and reports the build version.
       - name: Wait for staging to serve this build
         if: env.FULL == 'true'
         env:
-          AUDIENCE: ${{ vars.AUTH_AUDIENCE_STAGING }}
           HOST: ${{ steps.infra.outputs.staging_host }}
         run: |
-          set -euo pipefail
-          TOKEN=$(az account get-access-token --scope "$AUDIENCE/.default" --query accessToken --output tsv)
-          echo "::add-mask::$TOKEN"
+          set -uo pipefail
           for attempt in $(seq 1 60); do
-            if curl -fsS --max-time 10 -H "Authorization: Bearer $TOKEN" "https://$HOST/" | grep -q "dpl=$SHA"; then
+            version=$(curl -fsS --max-time 10 "https://$HOST/health" | jq -r '.version // empty' 2>/dev/null || true)
+            if [ "$version" = "$SHA" ]; then
               echo "Staging serves $SHA"
               exit 0
             fi
@@ -231,20 +228,18 @@ jobs:
           echo "::error::Staging did not serve $SHA within 10 minutes"
           exit 1
 
-      # Spec 0002 D7: auth enforced, and app + database healthy, before the swap.
+      # Spec 0002 D7: sign-in enforced, and app + database healthy, before the swap. The swap
+      # itself is also guarded: App Service warms up /health and stops unless it returns 200.
       - name: Verify staging
         if: env.FULL == 'true'
         env:
-          AUDIENCE: ${{ vars.AUTH_AUDIENCE_STAGING }}
           HOST: ${{ steps.infra.outputs.staging_host }}
           TENANT: ${{ vars.AZURE_TENANT_ID }}
         run: |
           set -euo pipefail
-          TOKEN=$(az account get-access-token --scope "$AUDIENCE/.default" --query accessToken --output tsv)
-          echo "::add-mask::$TOKEN"
           bash scripts/ci/check-signin-required.sh "$HOST" "$TENANT"
-          body=$(curl -fsS --max-time 10 -H "Authorization: Bearer $TOKEN" "https://$HOST/health")
-          if [ "$body" != '{"status":"ok"}' ]; then
+          status=$(curl -fsS --max-time 10 "https://$HOST/health" | jq -r '.status')
+          if [ "$status" != "ok" ]; then
             echo "::error::Staging /health did not report ok"
             exit 1
           fi
