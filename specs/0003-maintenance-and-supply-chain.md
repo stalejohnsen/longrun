@@ -42,7 +42,7 @@ Every versioned thing has a named update path:
 
 ### Dependabot
 
-- `npm` and `github-actions`, daily, `cooldown: default-days: 3`.
+- `npm` and `github-actions`, daily, `cooldown: default-days: 7` (zizmor's minimum for its `dependabot-cooldown` audit; npm's own `min-release-age` stays at 3 days).
 - Groups: dev dependencies (minor and patch), runtime dependencies (minor and patch), GitHub Actions (minor and patch). Majors come one PR each.
 - Security updates are not delayed.
 - `ignore` covers only the held majors in the table above. Each entry carries a comment pointing to its reason in `docs/lifecycle.md`.
@@ -103,7 +103,7 @@ A monthly review (runbook) fills the rows from `gh pr list`, notes dependency fr
 
 | ID  | Criterion                                                                                                                                                     | How verified                                                                  |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| M1  | `.github/dependabot.yml` covers `npm` and `github-actions`, daily, with a 3-day cooldown, the groups above and only the held majors ignored.                  | Review; first Dependabot PRs                                                  |
+| M1  | `.github/dependabot.yml` covers `npm` and `github-actions`, daily, with a 7-day cooldown, the groups above and only the held majors ignored.                  | Review; first Dependabot PRs                                                  |
 | M2  | `.npmrc` sets `min-release-age=3` next to `ignore-scripts=true`, and CI's npm version supports it.                                                            | Review; CI log shows the npm version                                          |
 | M3  | CI fails when a runtime dependency has a high or critical advisory.                                                                                           | CI step; a test run against a known-vulnerable lockfile in a throwaway branch |
 | M4  | CI runs `npm audit signatures` and zizmor. zizmor reports no findings on the current workflows.                                                               | CI; code scanning shows zizmor results                                        |

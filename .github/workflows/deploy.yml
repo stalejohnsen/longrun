@@ -165,12 +165,14 @@ jobs:
       - name: Open database firewall for this runner
         id: firewall
         if: env.FULL == 'true'
+        env:
+          POSTGRES_SERVER: ${{ steps.infra.outputs.postgres_server }}
         run: |
           set -euo pipefail
           ip=$(curl -fsS --max-time 10 https://api.ipify.org)
           az postgres flexible-server firewall-rule create \
             --resource-group "$RESOURCE_GROUP" \
-            --server-name "${{ steps.infra.outputs.postgres_server }}" \
+            --server-name "$POSTGRES_SERVER" \
             --name "ci-migration-$RUN_ID" \
             --start-ip-address "$ip" --end-ip-address "$ip" --output none
           echo "created=true" >> "$GITHUB_OUTPUT"
@@ -191,10 +193,12 @@ jobs:
 
       - name: Close database firewall (always)
         if: always() && steps.firewall.outputs.created == 'true'
+        env:
+          POSTGRES_SERVER: ${{ steps.infra.outputs.postgres_server }}
         run: |
           az postgres flexible-server firewall-rule delete \
             --resource-group "$RESOURCE_GROUP" \
-            --server-name "${{ steps.infra.outputs.postgres_server }}" \
+            --server-name "$POSTGRES_SERVER" \
             --name "ci-migration-$RUN_ID" --yes --output none
 
       # --- Staging ---------------------------------------------------------------------------
@@ -208,10 +212,12 @@ jobs:
 
       - name: Deploy bundle to staging slot
         if: env.FULL == 'true'
+        env:
+          WEB_APP: ${{ steps.infra.outputs.web_app }}
         run: |
           az webapp deploy \
             --resource-group "$RESOURCE_GROUP" \
-            --name "${{ steps.infra.outputs.web_app }}" \
+            --name "$WEB_APP" \
             --slot staging \
             --src-path artifact/app.zip --type zip \
             --async false --restart true
@@ -256,10 +262,12 @@ jobs:
 
       - name: Swap staging into production
         if: env.FULL == 'true'
+        env:
+          WEB_APP: ${{ steps.infra.outputs.web_app }}
         run: |
           az webapp deployment slot swap \
             --resource-group "$RESOURCE_GROUP" \
-            --name "${{ steps.infra.outputs.web_app }}" \
+            --name "$WEB_APP" \
             --slot staging --target-slot production
 
       - name: Verify production requires sign-in
