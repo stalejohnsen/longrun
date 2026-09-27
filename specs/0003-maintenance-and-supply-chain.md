@@ -1,6 +1,6 @@
 # Spec 0003 – Maintenance and supply-chain security
 
-Status: Draft
+Status: Ready
 Date: 2026-09-27
 Related: [plan](../docs/plan.md) phase 6, ADRs [0001](../docs/adr/0001-web-framework-and-rendering.md), [0006](../docs/adr/0006-lint-and-format.md), [0007](../docs/adr/0007-infrastructure-and-deployment.md), [0008](../docs/adr/0008-dependency-updates-and-supply-chain.md)
 

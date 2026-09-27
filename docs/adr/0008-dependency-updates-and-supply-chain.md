@@ -1,6 +1,6 @@
 # 0008 – Dependency updates and supply-chain security
 
-Status: Proposed
+Status: Accepted
 Date: 2026-09-27
 
 ## Context
