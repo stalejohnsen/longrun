@@ -56,7 +56,7 @@ Run lint, typecheck and all tests before declaring a task done.
 - `migrations/` versioned database migrations
 - `infra/` Bicep
 - `specs/` feature specs
-- `docs/adr/`, `docs/runbooks/`, `docs/lifecycle.md`, `docs/learnings.md`
+- `docs/adr/`, `docs/runbooks/`, `docs/lifecycle.md`, `docs/learnings.md`, `docs/maintenance-log.md`
 
 ## Security (secure by default)
 

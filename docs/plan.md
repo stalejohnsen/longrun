@@ -98,7 +98,7 @@ Spec [0002](../specs/0002-deployment.md), ADR [0007](adr/0007-infrastructure-and
 
 ### Phase 6 – Maintenance and supply-chain security
 
-Spec [0003](../specs/0003-maintenance-and-supply-chain.md), ADR [0008](adr/0008-dependency-updates-and-supply-chain.md). No app features. Five PRs:
+Spec [0003](../specs/0003-maintenance-and-supply-chain.md), ADR [0008](adr/0008-dependency-updates-and-supply-chain.md). **Done 2026-09-27** (#33–#36, #38; #37 added approval before the swap). No app features. Five PRs:
 
 1. ADR 0008 and spec 0003.
 2. GitHub settings runbook (public repository, security features, ruleset, environment reviewers).

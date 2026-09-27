@@ -4,7 +4,7 @@ Longrun tracks end of support for other systems. This file does the same for Lon
 
 Dependabot proposes npm and GitHub Actions updates (spec 0003). The versions held below (TypeScript 6.0.x, ESLint 9, `@types/node` 24) are ignored in `.github/dependabot.yml`; remove the `ignore` entry in the same PR that lifts the hold. Node.js, PostgreSQL and Bicep API versions are not visible to Dependabot and are checked in the monthly review.
 
-Last checked: 2026-09-26
+Last checked: 2026-09-27
 
 ## Runtime and platform
 
