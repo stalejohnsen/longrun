@@ -1,0 +1,40 @@
+# Spec 0003 / ADR 0008. Daily, with a 3-day cooldown against freshly hijacked releases.
+# Security updates ignore the cooldown and are never grouped, so they always get owner review.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 3
+    groups:
+      # Auto-merged when all required checks pass (dependabot-auto-merge.yml).
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      # Owner review, then deploy.
+      runtime-dependencies:
+        dependency-type: production
+        update-types: [minor, patch]
+    ignore:
+      # Held at 6.0.x: typescript-eslint supports <6.1.0 (ADR 0006, docs/lifecycle.md).
+      - dependency-name: typescript
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      # Held at 9: the eslint-config-next plugins support ESLint only up to 9 (ADR 0006, docs/lifecycle.md).
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      # Follows the Node major in .node-version; moves with the Node upgrade (docs/lifecycle.md).
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 3
+    groups:
+      # Auto-merged when all required checks pass (dependabot-auto-merge.yml).
+      github-actions:
+        update-types: [minor, patch]
