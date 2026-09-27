@@ -93,7 +93,7 @@ Read the outputs:
 az deployment sub show --name longrun-bootstrap --query properties.outputs -o json
 ```
 
-Create the environment with yourself as required reviewer (spec 0002 D4):
+Create the environment with yourself as required reviewer (spec 0002 D4). The reviewer and branch policy take effect only on a public repository; the other repository settings are in [github-settings.md](github-settings.md):
 
 ```sh
 gh api -X PUT repos/stalejohnsen/longrun/environments/production --input - <<JSON
