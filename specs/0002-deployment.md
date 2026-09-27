@@ -46,20 +46,20 @@ The owner starts the `Deploy` workflow on `main` (Actions → Deploy → Run wor
 
 ## Acceptance criteria
 
-| #   | Criterion                                                                                                                 | Verified by                                           |
-| --- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| D1  | The deploy workflow runs only for commits on `main` whose CI succeeded.                                                   | Workflow trigger config, reviewed in PR               |
-| D2  | Pull requests build and lint all Bicep without Azure credentials.                                                         | CI job                                                |
-| D3  | The same build artifact is deployed to staging and swapped to production. No rebuild happens after approval.              | Workflow structure; `DEPLOYMENT_ID` check in step 5   |
-| D4  | No Azure change happens before the owner approves in the `production` environment.                                        | Environment protection rule                           |
-| D5  | A failed migration stops the deployment before staging is touched.                                                        | Job dependencies                                      |
-| D6  | The temporary firewall rule is removed on success and on failure.                                                         | Always-run step; runbook check after first deployment |
-| D7  | Staging verification fails the deployment unless sign-in is enforced on `/` and the anonymous `/health` reports `ok`.     | Verify step                                           |
-| D8  | Production is only changed by the swap, and only after D7 passes.                                                         | Job dependencies                                      |
-| D9  | The repository and GitHub hold no secrets. Only non-secret variables are used (tenant, subscription, pipeline client ID). | Review; `gh secret list` is empty                     |
-| D10 | The pipeline identity has `Contributor` on `rg-longrun` only. No Graph permissions, no role-assignment rights.            | Bootstrap Bicep review; runbook check                 |
-| D11 | Rollback is a documented second swap.                                                                                     | `docs/runbooks/rollback.md`                           |
-| D12 | In production, the app starts only with built-in auth enabled and managed identity configured (spec 0001 config rules).   | First-deployment runbook                              |
+| #   | Criterion                                                                                                                                                                                 | Verified by                                                                                   |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| D1  | The deploy workflow runs only for commits on `main` whose CI succeeded.                                                                                                                   | Workflow trigger config, reviewed in PR                                                       |
+| D2  | Pull requests build and lint all Bicep without Azure credentials.                                                                                                                         | CI job                                                                                        |
+| D3  | The same build artifact is deployed to staging and swapped to production. No rebuild happens after approval.                                                                              | Workflow structure; `DEPLOYMENT_ID` check in step 5                                           |
+| D4  | No Azure change happens before the owner approves in the `production` environment.                                                                                                        | Environment protection rule                                                                   |
+| D5  | A failed migration stops the deployment before staging is touched.                                                                                                                        | Job dependencies                                                                              |
+| D6  | The temporary firewall rule is removed on success and on failure.                                                                                                                         | Always-run step; runbook check after first deployment                                         |
+| D7  | Staging verification fails the deployment unless sign-in is enforced on `/` and the anonymous `/health` reports `ok`.                                                                     | Verify step                                                                                   |
+| D8  | Production is only changed by the swap, and only after D7 passes.                                                                                                                         | Job dependencies                                                                              |
+| D9  | The repository and GitHub hold no credentials. Identifiers (tenant, subscription, client IDs, database administrator) are environment secrets only so logs mask them (ADR 0007, amended). | Review; `gh secret list --env production` shows only those identifiers; no repository secrets |
+| D10 | The pipeline identity has `Contributor` on `rg-longrun` only. No Graph permissions, no role-assignment rights.                                                                            | Bootstrap Bicep review; runbook check                                                         |
+| D11 | Rollback is a documented second swap.                                                                                                                                                     | `docs/runbooks/rollback.md`                                                                   |
+| D12 | In production, the app starts only with built-in auth enabled and managed identity configured (spec 0001 config rules).                                                                   | First-deployment runbook                                                                      |
 
 ## Error cases
 

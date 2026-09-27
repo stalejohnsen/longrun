@@ -97,6 +97,13 @@ jobs:
       SHA: ${{ github.sha }}
       RUN_ID: ${{ github.run_id }}
       FULL: ${{ inputs.mode == 'full' }}
+      # Identifiers, not credentials. Stored as environment secrets only so the logs of a public
+      # repository mask them (ADR 0007, spec 0002 D9). Passed to shell steps through env, never
+      # inlined into run scripts.
+      POSTGRES_ADMIN_OBJECT_ID: ${{ secrets.POSTGRES_ADMIN_OBJECT_ID }}
+      POSTGRES_ADMIN_NAME: ${{ secrets.POSTGRES_ADMIN_NAME }}
+      AUTH_CLIENT_ID_PRODUCTION: ${{ secrets.AUTH_CLIENT_ID_PRODUCTION }}
+      AUTH_CLIENT_ID_STAGING: ${{ secrets.AUTH_CLIENT_ID_STAGING }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -112,12 +119,12 @@ jobs:
       - name: Install dependencies (migration runner)
         run: npm ci
 
-      - name: Azure login (OIDC, no secrets)
+      - name: Azure login (OIDC, no credentials)
         uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Preview infrastructure changes
         run: |
@@ -125,10 +132,10 @@ jobs:
             --resource-group "$RESOURCE_GROUP" \
             --template-file infra/main/main.bicep \
             --parameters \
-              postgresAdminObjectId="${{ vars.POSTGRES_ADMIN_OBJECT_ID }}" \
-              postgresAdminPrincipalName="${{ vars.POSTGRES_ADMIN_NAME }}" \
-              productionAuthClientId="${{ vars.AUTH_CLIENT_ID_PRODUCTION }}" \
-              stagingAuthClientId="${{ vars.AUTH_CLIENT_ID_STAGING }}"
+              postgresAdminObjectId="$POSTGRES_ADMIN_OBJECT_ID" \
+              postgresAdminPrincipalName="$POSTGRES_ADMIN_NAME" \
+              productionAuthClientId="$AUTH_CLIENT_ID_PRODUCTION" \
+              stagingAuthClientId="$AUTH_CLIENT_ID_STAGING"
 
       - name: Deploy infrastructure
         id: infra
@@ -139,10 +146,10 @@ jobs:
             --name "main-$RUN_ID" \
             --template-file infra/main/main.bicep \
             --parameters \
-              postgresAdminObjectId="${{ vars.POSTGRES_ADMIN_OBJECT_ID }}" \
-              postgresAdminPrincipalName="${{ vars.POSTGRES_ADMIN_NAME }}" \
-              productionAuthClientId="${{ vars.AUTH_CLIENT_ID_PRODUCTION }}" \
-              stagingAuthClientId="${{ vars.AUTH_CLIENT_ID_STAGING }}" \
+              postgresAdminObjectId="$POSTGRES_ADMIN_OBJECT_ID" \
+              postgresAdminPrincipalName="$POSTGRES_ADMIN_NAME" \
+              productionAuthClientId="$AUTH_CLIENT_ID_PRODUCTION" \
+              stagingAuthClientId="$AUTH_CLIENT_ID_STAGING" \
             --query properties.outputs --output json)
           {
             echo "web_app=$(jq -r .webAppName.value <<<"$outputs")"
@@ -234,7 +241,7 @@ jobs:
         if: env.FULL == 'true'
         env:
           HOST: ${{ steps.infra.outputs.staging_host }}
-          TENANT: ${{ vars.AZURE_TENANT_ID }}
+          TENANT: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           set -euo pipefail
           bash scripts/ci/check-signin-required.sh "$HOST" "$TENANT"
@@ -259,7 +266,7 @@ jobs:
         if: env.FULL == 'true'
         env:
           HOST: ${{ steps.infra.outputs.production_host }}
-          TENANT: ${{ vars.AZURE_TENANT_ID }}
+          TENANT: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           set -euo pipefail
           bash scripts/ci/check-signin-required.sh "$HOST" "$TENANT"
