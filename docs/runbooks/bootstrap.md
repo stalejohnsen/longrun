@@ -105,18 +105,35 @@ JSON
 gh api -X POST repos/stalejohnsen/longrun/environments/production/deployment-branch-policies -f name=main -f type=branch
 ```
 
-Set the **non-secret** identifiers as environment variables. Use variables, not secrets (spec 0002 D9). `POSTGRES_ADMIN_*` makes you the database's Entra administrator, for the database bootstrap only (ADR 0007):
+Set the **non-secret** identifiers as environment variables. Use variables, not secrets (spec 0002 D9). The values are read straight from the deployment outputs, so there is nothing to copy by hand (a hand-copied value once lost a character and broke the staging token request). `POSTGRES_ADMIN_*` makes you the database's Entra administrator, for the database bootstrap only (ADR 0007):
 
 ```sh
-for pair in \
-  AZURE_TENANT_ID=<tenantId> \
-  AZURE_SUBSCRIPTION_ID=<subscriptionId> \
-  AZURE_CLIENT_ID=<pipelineClientId> \
-  WEB_APP_NAME=<webAppName> \
-  AUTH_CLIENT_ID_PRODUCTION=<productionAuthClientId> \
-  AUTH_CLIENT_ID_STAGING=<stagingAuthClientId> \
-  AUTH_AUDIENCE_STAGING=<stagingAuthAudience> \n  POSTGRES_ADMIN_OBJECT_ID="$(az ad signed-in-user show --query id -o tsv)" \n  POSTGRES_ADMIN_NAME="$(az ad signed-in-user show --query userPrincipalName -o tsv)"; do
-  gh variable set "${pair%%=*}" --env production --body "${pair#*=}"
+output() {
+  az deployment sub show --name longrun-bootstrap --query "properties.outputs.$1.value" -o tsv | tr -d '\r'
+}
+set_var() {
+  [ -n "$2" ] || { echo "Empty value for $1; is the bootstrap deployment complete?"; return 1; }
+  gh variable set "$1" --env production --body "$2"
+}
+set_var AZURE_TENANT_ID "$(output tenantId)"
+set_var AZURE_SUBSCRIPTION_ID "$(output subscriptionId)"
+set_var AZURE_CLIENT_ID "$(output pipelineClientId)"
+set_var WEB_APP_NAME "$(output webAppName)"
+set_var AUTH_CLIENT_ID_PRODUCTION "$(output productionAuthClientId)"
+set_var AUTH_CLIENT_ID_STAGING "$(output stagingAuthClientId)"
+set_var AUTH_AUDIENCE_STAGING "$(output stagingAuthAudience)"
+set_var POSTGRES_ADMIN_OBJECT_ID "$(az ad signed-in-user show --query id -o tsv | tr -d '\r')"
+set_var POSTGRES_ADMIN_NAME "$(az ad signed-in-user show --query userPrincipalName -o tsv | tr -d '\r')"
+```
+
+Check that every variable matches its output:
+
+```sh
+for pair in AZURE_TENANT_ID:tenantId AZURE_SUBSCRIPTION_ID:subscriptionId AZURE_CLIENT_ID:pipelineClientId \
+  WEB_APP_NAME:webAppName AUTH_CLIENT_ID_PRODUCTION:productionAuthClientId \
+  AUTH_CLIENT_ID_STAGING:stagingAuthClientId AUTH_AUDIENCE_STAGING:stagingAuthAudience; do
+  name=${pair%%:*}; key=${pair#*:}
+  [ "$(gh variable get "$name" --env production)" = "$(output "$key")" ] && echo "ok       $name" || echo "MISMATCH $name"
 done
 ```
 
