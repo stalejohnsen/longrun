@@ -31,6 +31,7 @@ Any other new library, service or tool needs an ADR draft with options and trade
 - One task per branch and PR. Keep diffs small.
 - Update docs, specs and ADRs in the same PR as the code they describe.
 - When you are unsure, ask. Do not guess about Azure behaviour, library APIs or versions; check official docs.
+- Before designing a mechanism, find the platform's documented, commonly used pattern and prefer it.
 
 ## Commands
 
