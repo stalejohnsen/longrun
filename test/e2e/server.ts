@@ -5,8 +5,10 @@ import { Kysely, PostgresDialect } from 'kysely'
 import { migrateToLatest } from '../../src/db/migrate.ts'
 import { createPool } from '../../src/db/pool.ts'
 import { databaseConfig, databaseEnv, startPostgres } from '../helpers/postgres.ts'
+import { startEndOfLifeStub } from './endoflife-stub.ts'
 
 const container = await startPostgres()
+const endOfLife = await startEndOfLifeStub()
 
 const db = new Kysely<unknown>({
   dialect: new PostgresDialect({ pool: createPool(databaseConfig(container)) }),
@@ -32,12 +34,14 @@ const server = spawn(process.execPath, ['.next/standalone/server.js'], {
     PORT: process.env.PORT ?? '3100',
     HOSTNAME: '127.0.0.1',
     LONGRUN_DEV_IDENTITY: 'false',
+    ENDOFLIFE_BASE_URL: endOfLife.baseUrl,
     ...databaseEnv(container),
   },
 })
 
 async function shutdown(code: number) {
   server.kill()
+  endOfLife.server.close()
   await container.stop()
   process.exit(code)
 }

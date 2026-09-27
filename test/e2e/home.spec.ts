@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('home page renders from a production build', async ({ page }) => {
+test('the component list is the home page of the production build', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1, name: 'Longrun' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Components' })).toBeVisible()
 })
