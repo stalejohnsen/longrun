@@ -74,7 +74,7 @@ Requirements for `main`:
 
 - a pull request, with 0 approvals, because a single owner cannot approve their own PR;
 - the CI checks `verify` and `infra` from GitHub Actions (integration 15368);
-- no new CodeQL alerts of high severity or above.
+- no new CodeQL alerts of high severity or above, and no zizmor findings of medium severity or above (spec 0003 M4).
 
 Force pushes and deletion are blocked. Nobody can bypass the ruleset.
 
@@ -115,7 +115,8 @@ cat > ruleset.json <<'JSON'
       "type": "code_scanning",
       "parameters": {
         "code_scanning_tools": [
-          { "tool": "CodeQL", "security_alerts_threshold": "high_or_higher", "alerts_threshold": "errors" }
+          { "tool": "CodeQL", "security_alerts_threshold": "high_or_higher", "alerts_threshold": "errors" },
+          { "tool": "zizmor", "security_alerts_threshold": "medium_or_higher", "alerts_threshold": "errors_and_warnings" }
         ]
       }
     }

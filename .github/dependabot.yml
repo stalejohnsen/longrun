@@ -1,4 +1,5 @@
-# Spec 0003 / ADR 0008. Daily, with a 3-day cooldown against freshly hijacked releases.
+# Spec 0003 / ADR 0008. Daily, with a 7-day cooldown against freshly hijacked releases
+# (zizmor's dependabot-cooldown minimum; npm's own min-release-age stays at 3 days).
 # Security updates ignore the cooldown and are never grouped, so they always get owner review.
 version: 2
 updates:
@@ -7,7 +8,7 @@ updates:
     schedule:
       interval: daily
     cooldown:
-      default-days: 3
+      default-days: 7
     groups:
       # Auto-merged when all required checks pass (dependabot-auto-merge.yml).
       dev-dependencies:
@@ -33,7 +34,7 @@ updates:
     schedule:
       interval: daily
     cooldown:
-      default-days: 3
+      default-days: 7
     groups:
       # Auto-merged when all required checks pass (dependabot-auto-merge.yml).
       github-actions:

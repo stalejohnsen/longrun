@@ -38,7 +38,7 @@ Facts checked on 2026-09-27:
 ## Decision
 
 1. **Make the repository public.** This enables the free security features below and makes the experiment verifiable.
-2. **(a) Dependabot** for `npm` and `github-actions`: daily, `cooldown: default-days: 3`, grouped minor and patch updates, majors one by one. Security updates bypass the cooldown. The versions it cannot see (Node runtime, PostgreSQL, Bicep API versions, the Testcontainers image) stay in `docs/lifecycle.md` with a monthly check. Renovate is the documented alternative. A trial can be its own spec later, using the metrics from spec 0003.
+2. **(a) Dependabot** for `npm` and `github-actions`: daily, `cooldown: default-days: 7`, grouped minor and patch updates, majors one by one. Security updates bypass the cooldown. The versions it cannot see (Node runtime, PostgreSQL, Bicep API versions, the Testcontainers image) stay in `docs/lifecycle.md` with a monthly check. Renovate is the documented alternative. A trial can be its own spec later, using the metrics from spec 0003. _(Amended 2026-09-27: 3 days at first, following the golden path. Raised to 7 because zizmor's `dependabot-cooldown` audit flags less than 7 as medium; we tighten rather than configure the check down. Security updates are unaffected.)_
 3. **npm hardening:** add `min-release-age=3` to `.npmrc`. For an urgent fix that is younger than 3 days, the security-patch runbook overrides it for that one command.
 4. **Detection and gates in CI:**
    - `npm audit --omit=dev --audit-level=high` (the ADR 0001 promise);
