@@ -39,10 +39,10 @@ The owner starts the `Deploy` workflow on `main` (Actions → Deploy → Run wor
    - The rule is removed in an always-run step.
 5. **Staging:** the bundle is deployed to the `staging` slot, and the job waits until the slot serves the new `DEPLOYMENT_ID`.
 6. **Verify:**
-   - An unauthenticated `GET /` on staging is redirected to sign-in (302 to `/.auth/login/aad`).
+   - Unauthenticated requests to staging are stopped by built-in auth: a non-browser request gets `401` with a `WWW-Authenticate: Bearer` challenge, and a browser request is redirected (`302`) to the tenant's Microsoft Entra authorize endpoint (`scripts/ci/check-signin-required.sh`).
    - `GET /health` with a pipeline token for the staging app registration returns 200 and `{"status":"ok"}`.
 7. **Swap:** `staging` is swapped into production.
-8. **Post-swap check:** an unauthenticated `GET /` on production is redirected to sign-in.
+8. **Post-swap check:** production requires sign-in, checked the same way as staging (401 challenge for clients, 302 to Microsoft Entra for browsers).
 
 ## Acceptance criteria
 
