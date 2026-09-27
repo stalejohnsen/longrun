@@ -74,7 +74,7 @@ test.describe('security headers (AC15)', () => {
       }
     })
     await page.goto('/')
-    await expect(page.getByRole('heading', { level: 1, name: 'Longrun' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Components' })).toBeVisible()
     await page.waitForLoadState('networkidle')
     expect(violations).toEqual([])
   })

@@ -63,12 +63,12 @@ The system also stores created and updated timestamps. It stores no personal dat
 - Timeout: 5 seconds. No retries during the request.
 - Outcomes:
 
-| Outcome                                                  | Result                                                                                                                                                                          |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Found, `eolFrom` is a date                               | Store that date, source `endoflife.date`, and the lookup time.                                                                                                                  |
-| Found, `eolFrom` is null                                 | No known date. The user is told the product has no announced end of support and may enter a date manually.                                                                      |
-| 404                                                      | The user is told the product or release was not found on endoflife.date and may correct it or enter a date manually. Nothing is saved until they resubmit.                      |
-| Timeout, network error, other status or invalid response | The user is told the lookup is unavailable and may enter a date manually or try again. The failure is logged without user-entered values. Nothing is saved until they resubmit. |
+| Outcome                                                  | Result                                                                                                                                                                                          |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Found, `eolFrom` is a date                               | Store that date, source `endoflife.date`, and the lookup time.                                                                                                                                  |
+| Found, `eolFrom` is null                                 | No known date. The component is saved with the manual date if one was given, otherwise without a date, and the user is told the product has no announced end of support (clarified 2026-09-27). |
+| 404                                                      | The user is told the product or release was not found on endoflife.date and may correct it or enter a date manually. Nothing is saved until they resubmit.                                      |
+| Timeout, network error, other status or invalid response | The user is told the lookup is unavailable and may enter a date manually or try again. The failure is logged without user-entered values. Nothing is saved until they resubmit.                 |
 
 - If the user enters a manual date **and** gives a product/release, the lookup result wins when it returns a date. The manual date is used only if the lookup finds no date (decision Q3).
 
