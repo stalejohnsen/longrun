@@ -45,6 +45,22 @@ describe('configuration outside Azure', () => {
     ])
   })
 
+  test('uses the public endoflife.date API by default and allows a local stub', () => {
+    expect(parseConfig(local).endOfLifeBaseUrl).toBe('https://endoflife.date')
+    expect(
+      parseConfig({ ...local, ENDOFLIFE_BASE_URL: 'http://127.0.0.1:4010' }).endOfLifeBaseUrl,
+    ).toBe('http://127.0.0.1:4010')
+  })
+
+  test.each(['ftp://endoflife.date', 'javascript:alert(1)', 'not a url'])(
+    'rejects endoflife.date base URL %j',
+    (url) => {
+      expect(settingsOf({ ...local, ENDOFLIFE_BASE_URL: url })).toEqual([
+        'ENDOFLIFE_BASE_URL is missing or invalid',
+      ])
+    },
+  )
+
   test('allows the development stand-in identity', () => {
     expect(parseConfig({ ...local, LONGRUN_DEV_IDENTITY: 'true' }).devIdentity).toBe(true)
   })
@@ -88,6 +104,12 @@ describe('configuration in Azure (App Service)', () => {
   test('refuses the development stand-in identity', () => {
     expect(settingsOf({ ...azure, LONGRUN_DEV_IDENTITY: 'true' })).toContain(
       'LONGRUN_DEV_IDENTITY must not be enabled in Azure',
+    )
+  })
+
+  test('requires https for the endoflife.date API', () => {
+    expect(settingsOf({ ...azure, ENDOFLIFE_BASE_URL: 'http://endoflife.date' })).toContain(
+      'ENDOFLIFE_BASE_URL must use https in Azure',
     )
   })
 

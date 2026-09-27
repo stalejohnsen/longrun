@@ -72,7 +72,7 @@ The owner starts the `Deploy` workflow on `main` (Actions → Deploy → Run wor
 ## Follow-ups tracked here
 
 - ~~Server actions must reject app-only principals~~ Resolved 2026-09-27: no application can call the app any more; only the slot's own client ID is accepted (ADR 0002 amendment).
-- Confirm on first deployment:
-  - the `WEBSITE_AUTH_ENABLED` value;
-  - the principal claim names;
-  - the health-ping headers (PR B).
+- ~~Confirm on first deployment~~ **Confirmed 2026-09-27** (deploy run 36308152554):
+  - `WEBSITE_AUTH_ENABLED`: the app starts in Azure, so config validation accepts the platform's value.
+  - Principal claim names: the owner signed in with a browser and sees the Longrun page, and the pipeline's app-only token passed the app's identity check on staging.
+  - Health-ping headers: App Service `HealthCheckStatus` was 100 in every 5-minute interval after the swap, so the platform's pings are accepted by `/health`.

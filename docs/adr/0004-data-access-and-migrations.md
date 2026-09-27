@@ -130,6 +130,10 @@ Mapping identities to database roles (`pgaadauth_create_principal…`) and grant
 - **`pg` calls an async `password` function once per new client**, and `Pool` creates a new client for each connection (`test/db/pool.int.test.ts`). The resolved password is cached on that client, so connections are recycled after 30 minutes (`maxLifetimeSeconds`), well within the token lifetime.
 - Still open (infrastructure phase): the exact functions for mapping a managed identity to a Postgres role.
 
+### Found while building spec 0001 (2026-09-27)
+
+- `pg` parses `date` columns into a JavaScript `Date` at **local** midnight, so east of UTC a calendar date shifts back a day (`2026-03-01` became `2026-02-28T23:00Z`). The pool therefore returns `date` as a `YYYY-MM-DD` string (`dateAsString` in `src/db/pool.ts`, set per pool, not globally). A test forces a non-UTC time zone so CI, which runs in UTC, would catch a regression.
+
 ## Follow-up
 
 - Validation library ADR (also used to validate configuration and rows from external APIs).

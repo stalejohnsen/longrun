@@ -103,14 +103,14 @@ The app still defends itself. It does not assume the platform is configured corr
 
 - One server-side helper parses and validates `X-MS-CLIENT-PRINCIPAL` with a schema and returns the user (object ID and display name) or nothing.
 - Every page, server action and route handler requires a user. A missing or invalid header returns 401. This is also checked centrally in Next.js `proxy`, but each server action checks again, because server actions must not rely on page-level checks alone.
-- The app fails at startup in Azure if it cannot confirm that built-in auth is enabled. **Verified (skeleton PR B):** App Service injects the read-only variable `WEBSITE_AUTH_ENABLED` when built-in authentication is enabled ([app settings reference](https://learn.microsoft.com/en-us/azure/app-service/reference-app-settings)). "In Azure" is detected by the read-only `WEBSITE_SITE_NAME`, which the platform injects and the app cannot unset. The exact value format of `WEBSITE_AUTH_ENABLED` is accepted case-insensitively and must be confirmed on the first deployment.
+- The app fails at startup in Azure if it cannot confirm that built-in auth is enabled. **Verified (skeleton PR B):** App Service injects the read-only variable `WEBSITE_AUTH_ENABLED` when built-in authentication is enabled ([app settings reference](https://learn.microsoft.com/en-us/azure/app-service/reference-app-settings)). "In Azure" is detected by the read-only `WEBSITE_SITE_NAME`, which the platform injects and the app cannot unset. The exact value format of `WEBSITE_AUTH_ENABLED` is accepted case-insensitively. **Confirmed on the first deployment (2026-09-27):** the app starts in Azure, so the platform's value passes config validation.
 - Sign-out links to `/.auth/logout`.
 - User names and IDs are not logged (`CLAUDE.md`: no personal data in logs).
 
 ### Local development and tests
 
 - A development-only stand-in identity provides a fixed test user. It is enabled only by `LONGRUN_DEV_IDENTITY=true`, and the app refuses to start if that setting is present **in Azure**. (Refined from "with `NODE_ENV=production`": the end-to-end tests run a production build locally, so the Azure signal is the reliable boundary.) This is security-sensitive and has its own tests.
-- The principal parser accepts the object ID under both the mapped claim name (`http://schemas.microsoft.com/identity/claims/objectidentifier`) and `oid`, and exposes only the object ID. The exact claim names App Service sends must be confirmed on the first deployment.
+- The principal parser accepts the object ID under both the mapped claim name (`http://schemas.microsoft.com/identity/claims/objectidentifier`) and `oid`, and exposes only the object ID. **Confirmed on the first deployment (2026-09-27):** browser sign-in by the owner and the pipeline's app-only token both pass the parser.
 - Tests cover:
   - valid header → user;
   - missing or invalid header → 401;
