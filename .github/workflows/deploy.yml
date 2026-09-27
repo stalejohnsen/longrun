@@ -237,15 +237,12 @@ jobs:
         env:
           AUDIENCE: ${{ vars.AUTH_AUDIENCE_STAGING }}
           HOST: ${{ steps.infra.outputs.staging_host }}
+          TENANT: ${{ vars.AZURE_TENANT_ID }}
         run: |
           set -euo pipefail
           TOKEN=$(az account get-access-token --scope "$AUDIENCE/.default" --query accessToken --output tsv)
           echo "::add-mask::$TOKEN"
-          read -r code location < <(curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' "https://$HOST/")
-          if [ "$code" != "302" ] || [[ "$location" != *"/.auth/login/aad"* ]]; then
-            echo "::error::Unauthenticated request was not redirected to sign-in (status $code)"
-            exit 1
-          fi
+          bash scripts/ci/check-signin-required.sh "$HOST" "$TENANT"
           body=$(curl -fsS --max-time 10 -H "Authorization: Bearer $TOKEN" "https://$HOST/health")
           if [ "$body" != '{"status":"ok"}' ]; then
             echo "::error::Staging /health did not report ok"
@@ -267,11 +264,7 @@ jobs:
         if: env.FULL == 'true'
         env:
           HOST: ${{ steps.infra.outputs.production_host }}
+          TENANT: ${{ vars.AZURE_TENANT_ID }}
         run: |
           set -euo pipefail
-          read -r code location < <(curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' "https://$HOST/")
-          if [ "$code" != "302" ] || [[ "$location" != *"/.auth/login/aad"* ]]; then
-            echo "::error::Production did not redirect to sign-in after the swap (status $code)"
-            exit 1
-          fi
-          echo "Production requires sign-in"
+          bash scripts/ci/check-signin-required.sh "$HOST" "$TENANT"

@@ -9,13 +9,11 @@ WEB_APP=$(az webapp list -g rg-longrun --query "[0].name" -o tsv)
 az webapp deployment slot swap -g rg-longrun -n "$WEB_APP" --slot staging --target-slot production
 ```
 
-Then check that production requires sign-in, and open it in a browser:
+Then check that production requires sign-in (the same check the deploy workflow runs), and open it in a browser:
 
 ```sh
-curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' "https://$WEB_APP.azurewebsites.net/"
+bash scripts/ci/check-signin-required.sh "$WEB_APP.azurewebsites.net" "$(az account show --query tenantId -o tsv)"
 ```
-
-Expect `302` to `/.auth/login/aad`.
 
 ## Afterwards
 
