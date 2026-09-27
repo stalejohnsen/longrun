@@ -21,6 +21,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </Link>
           <nav aria-label="Main">
             <Link href="/">Components</Link>
+            <Link href="/end-of-support">End of support</Link>
           </nav>
           {/* App Service built-in auth sign-out (ADR 0002). */}
           <a href="/.auth/logout">Sign out</a>

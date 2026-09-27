@@ -1,6 +1,6 @@
 # Spec 0001 – Component register and end-of-support view
 
-Status: Ready
+Status: Implemented (2026-09-27)
 Date: 2026-09-26
 Related: [plan](../docs/plan.md), ADRs [0001](../docs/adr/0001-web-framework-and-rendering.md)–[0005](../docs/adr/0005-validation-library.md)
 

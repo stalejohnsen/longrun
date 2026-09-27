@@ -83,10 +83,14 @@ Spec [0002](../specs/0002-deployment.md), ADR [0007](adr/0007-infrastructure-and
 
 ### Phase 4 – Component register
 
+**Done 2026-09-27** with spec [0001](../specs/0001-component-register.md): PRs C1 (#24), C2 (#25), C3a (#28), C3b (#29).
+
 - Create, list, edit and delete components (exact scope set by the spec).
 - Database migrations for the component table.
 
 ### Phase 5 – End-of-support view
+
+**Done 2026-09-27**: endoflife.date lookup in C2 (#25), the view in C4.
 
 - Look up end-of-support dates from endoflife.date when the product is supported; manual entry otherwise.
 - View of components reaching end of support within a user-chosen window.
