@@ -105,35 +105,29 @@ JSON
 gh api -X POST repos/stalejohnsen/longrun/environments/production/deployment-branch-policies -f name=main -f type=branch
 ```
 
-Set the **non-secret** identifiers as environment variables. Use variables, not secrets (spec 0002 D9). The values are read straight from the deployment outputs, so there is nothing to copy by hand (a hand-copied value once lost a character and broke the staging token request). `POSTGRES_ADMIN_*` makes you the database's Entra administrator, for the database bootstrap only (ADR 0007):
+Store the identifiers as **environment secrets**. They are not credentials; they are secrets only so that GitHub masks them in workflow logs, which would be public if the repository were (spec 0002 D9, ADR 0007). The values are read straight from the deployment outputs, so there is nothing to copy by hand (a hand-copied value once lost a character and broke the staging token request). `POSTGRES_ADMIN_*` makes you the database's Entra administrator, for the database bootstrap only (ADR 0007):
 
 ```sh
 output() {
   az deployment sub show --name longrun-bootstrap --query "properties.outputs.$1.value" -o tsv | tr -d '\r'
 }
-set_var() {
+set_id() {
   [ -n "$2" ] || { echo "Empty value for $1; is the bootstrap deployment complete?"; return 1; }
-  gh variable set "$1" --env production --body "$2"
+  printf '%s' "$2" | gh secret set "$1" --env production
 }
-set_var AZURE_TENANT_ID "$(output tenantId)"
-set_var AZURE_SUBSCRIPTION_ID "$(output subscriptionId)"
-set_var AZURE_CLIENT_ID "$(output pipelineClientId)"
-set_var WEB_APP_NAME "$(output webAppName)"
-set_var AUTH_CLIENT_ID_PRODUCTION "$(output productionAuthClientId)"
-set_var AUTH_CLIENT_ID_STAGING "$(output stagingAuthClientId)"
-set_var POSTGRES_ADMIN_OBJECT_ID "$(az ad signed-in-user show --query id -o tsv | tr -d '\r')"
-set_var POSTGRES_ADMIN_NAME "$(az ad signed-in-user show --query userPrincipalName -o tsv | tr -d '\r')"
+set_id AZURE_TENANT_ID "$(output tenantId)"
+set_id AZURE_SUBSCRIPTION_ID "$(output subscriptionId)"
+set_id AZURE_CLIENT_ID "$(output pipelineClientId)"
+set_id AUTH_CLIENT_ID_PRODUCTION "$(output productionAuthClientId)"
+set_id AUTH_CLIENT_ID_STAGING "$(output stagingAuthClientId)"
+set_id POSTGRES_ADMIN_OBJECT_ID "$(az ad signed-in-user show --query id -o tsv | tr -d '\r')"
+set_id POSTGRES_ADMIN_NAME "$(az ad signed-in-user show --query userPrincipalName -o tsv | tr -d '\r')"
 ```
 
-Check that every variable matches its output:
+Secret values cannot be read back. Check that all seven names exist; a wrong value makes the next deployment fail at Azure login or at the staging sign-in check:
 
 ```sh
-for pair in AZURE_TENANT_ID:tenantId AZURE_SUBSCRIPTION_ID:subscriptionId AZURE_CLIENT_ID:pipelineClientId \
-  WEB_APP_NAME:webAppName AUTH_CLIENT_ID_PRODUCTION:productionAuthClientId \
-  AUTH_CLIENT_ID_STAGING:stagingAuthClientId; do
-  name=${pair%%:*}; key=${pair#*:}
-  [ "$(gh variable get "$name" --env production)" = "$(output "$key")" ] && echo "ok       $name" || echo "MISMATCH $name"
-done
+gh secret list --env production
 ```
 
 ## 6. Verify
