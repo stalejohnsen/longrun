@@ -9,15 +9,16 @@
 
 The app validates its configuration at startup and refuses to start if anything is missing (ADR 0005). Locally, put settings in `.env.local`. Next.js loads it automatically, and `.env*` files are ignored by git and must never be committed.
 
-| Setting                | Local value     | Notes                                                                  |
-| ---------------------- | --------------- | ---------------------------------------------------------------------- |
-| `DATABASE_HOST`        | `localhost`     |                                                                        |
-| `DATABASE_PORT`        | `5432`          | Default 5432                                                           |
-| `DATABASE_NAME`        | `longrun`       |                                                                        |
-| `DATABASE_USER`        | `longrun`       |                                                                        |
-| `DATABASE_PASSWORD`    | any local value | Local only; refused in Azure (ADR 0004)                                |
-| `DATABASE_SSL`         | `disable`       | Must be `require` in Azure                                             |
-| `LONGRUN_DEV_IDENTITY` | `true`          | Stand-in signed-in user for `npm run dev`; refused in Azure (ADR 0002) |
+| Setting                | Local value     | Notes                                                                                          |
+| ---------------------- | --------------- | ---------------------------------------------------------------------------------------------- |
+| `DATABASE_HOST`        | `localhost`     |                                                                                                |
+| `DATABASE_PORT`        | `5432`          | Default 5432                                                                                   |
+| `DATABASE_NAME`        | `longrun`       |                                                                                                |
+| `DATABASE_USER`        | `longrun`       |                                                                                                |
+| `DATABASE_PASSWORD`    | any local value | Local only; refused in Azure (ADR 0004)                                                        |
+| `DATABASE_SSL`         | `disable`       | Must be `require` in Azure                                                                     |
+| `LONGRUN_DEV_IDENTITY` | `true`          | Stand-in signed-in user for `npm run dev`; refused in Azure (ADR 0002)                         |
+| `ENDOFLIFE_BASE_URL`   | leave unset     | Defaults to `https://endoflife.date`; tests point it at a local stub. Must be `https` in Azure |
 
 Without `LONGRUN_DEV_IDENTITY=true`, every request gets 401, because nothing injects the App Service identity header locally.
 

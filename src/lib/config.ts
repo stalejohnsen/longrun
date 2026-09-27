@@ -28,6 +28,9 @@ const configSchema = z
 
     // Development-only stand-in identity; refused in Azure (ADR 0002).
     LONGRUN_DEV_IDENTITY: flag.default(false),
+
+    // endoflife.date API origin (spec 0001). Tests point this at a local stub.
+    ENDOFLIFE_BASE_URL: z.url({ protocol: /^https?$/ }).default('https://endoflife.date'),
   })
   .superRefine((env, ctx) => {
     const inAzure = env.WEBSITE_SITE_NAME !== undefined
@@ -67,6 +70,13 @@ const configSchema = z
           message: 'must be "require" in Azure',
         })
       }
+      if (!env.ENDOFLIFE_BASE_URL.startsWith('https://')) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['ENDOFLIFE_BASE_URL'],
+          message: 'must use https in Azure',
+        })
+      }
     } else if (env.DATABASE_PASSWORD === undefined) {
       ctx.addIssue({
         code: 'custom',
@@ -80,6 +90,7 @@ export type Config = {
   inAzure: boolean
   authEncryptionKey: string | undefined
   devIdentity: boolean
+  endOfLifeBaseUrl: string
   database: {
     host: string
     port: number
@@ -116,6 +127,7 @@ export function parseConfig(env: Record<string, string | undefined>): Config {
     inAzure: env_.WEBSITE_SITE_NAME !== undefined,
     authEncryptionKey: env_.WEBSITE_AUTH_ENCRYPTION_KEY,
     devIdentity: env_.LONGRUN_DEV_IDENTITY,
+    endOfLifeBaseUrl: env_.ENDOFLIFE_BASE_URL,
     database: {
       host: env_.DATABASE_HOST,
       port: env_.DATABASE_PORT,
