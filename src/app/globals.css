@@ -84,3 +84,12 @@ fieldset {
 td.actions {
   white-space: nowrap;
 }
+.window-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0 0 1.5rem;
+}
+.window-form input {
+  width: 5rem;
+}
