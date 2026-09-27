@@ -37,11 +37,11 @@ The owner starts the `Deploy` workflow on `main` (Actions → Deploy → Run wor
    - A temporary firewall rule `ci-migration-<run id>` is added for the runner's IP address.
    - `scripts/migrate.ts` runs as `longrun_migrator` using the runner's Entra token.
    - The rule is removed in an always-run step.
-5. **Staging:** the bundle is deployed to the `staging` slot, and the job waits until the slot serves the new `DEPLOYMENT_ID`.
+5. **Staging:** the bundle is deployed to the `staging` slot, and the job waits until the anonymous `/health` reports the new version (commit SHA).
 6. **Verify:**
    - Unauthenticated requests to staging are stopped by built-in auth: a non-browser request gets `401` with a `WWW-Authenticate: Bearer` challenge, and a browser request is redirected (`302`) to the tenant's Microsoft Entra authorize endpoint (`scripts/ci/check-signin-required.sh`).
-   - `GET /health` with a pipeline token for the staging app registration returns 200 and `{"status":"ok"}`.
-7. **Swap:** `staging` is swapped into production.
+   - The anonymous `GET /health` reports `"status":"ok"`. The pipeline has no identity in the app (ADR 0002 amendment).
+7. **Swap:** `staging` is swapped into production. App Service first warms up `/health` on the slot and stops the swap unless it returns 200.
 8. **Post-swap check:** production requires sign-in, checked the same way as staging (401 challenge for clients, 302 to Microsoft Entra for browsers).
 
 ## Acceptance criteria
@@ -54,7 +54,7 @@ The owner starts the `Deploy` workflow on `main` (Actions → Deploy → Run wor
 | D4  | No Azure change happens before the owner approves in the `production` environment.                                        | Environment protection rule                           |
 | D5  | A failed migration stops the deployment before staging is touched.                                                        | Job dependencies                                      |
 | D6  | The temporary firewall rule is removed on success and on failure.                                                         | Always-run step; runbook check after first deployment |
-| D7  | Staging verification fails the deployment unless auth redirects and `/health` returns 200 with `{"status":"ok"}`.         | Verify step                                           |
+| D7  | Staging verification fails the deployment unless sign-in is enforced on `/` and the anonymous `/health` reports `ok`.     | Verify step                                           |
 | D8  | Production is only changed by the swap, and only after D7 passes.                                                         | Job dependencies                                      |
 | D9  | The repository and GitHub hold no secrets. Only non-secret variables are used (tenant, subscription, pipeline client ID). | Review; `gh secret list` is empty                     |
 | D10 | The pipeline identity has `Contributor` on `rg-longrun` only. No Graph permissions, no role-assignment rights.            | Bootstrap Bicep review; runbook check                 |
@@ -71,7 +71,7 @@ The owner starts the `Deploy` workflow on `main` (Actions → Deploy → Run wor
 
 ## Follow-ups tracked here
 
-- Once spec 0001 features exist, server actions must reject app-only principals, because staging accepts the pipeline identity (ADR 0007).
+- ~~Server actions must reject app-only principals~~ Resolved 2026-09-27: no application can call the app any more; only the slot's own client ID is accepted (ADR 0002 amendment).
 - ~~Confirm on first deployment~~ **Confirmed 2026-09-27** (deploy run 36308152554):
   - `WEBSITE_AUTH_ENABLED`: the app starts in Azure, so config validation accepts the platform's value.
   - Principal claim names: the owner signed in with a browser and sees the Longrun page, and the pipeline's app-only token passed the app's identity check on staging.

@@ -121,7 +121,6 @@ set_var AZURE_CLIENT_ID "$(output pipelineClientId)"
 set_var WEB_APP_NAME "$(output webAppName)"
 set_var AUTH_CLIENT_ID_PRODUCTION "$(output productionAuthClientId)"
 set_var AUTH_CLIENT_ID_STAGING "$(output stagingAuthClientId)"
-set_var AUTH_AUDIENCE_STAGING "$(output stagingAuthAudience)"
 set_var POSTGRES_ADMIN_OBJECT_ID "$(az ad signed-in-user show --query id -o tsv | tr -d '\r')"
 set_var POSTGRES_ADMIN_NAME "$(az ad signed-in-user show --query userPrincipalName -o tsv | tr -d '\r')"
 ```
@@ -131,7 +130,7 @@ Check that every variable matches its output:
 ```sh
 for pair in AZURE_TENANT_ID:tenantId AZURE_SUBSCRIPTION_ID:subscriptionId AZURE_CLIENT_ID:pipelineClientId \
   WEB_APP_NAME:webAppName AUTH_CLIENT_ID_PRODUCTION:productionAuthClientId \
-  AUTH_CLIENT_ID_STAGING:stagingAuthClientId AUTH_AUDIENCE_STAGING:stagingAuthAudience; do
+  AUTH_CLIENT_ID_STAGING:stagingAuthClientId; do
   name=${pair%%:*}; key=${pair#*:}
   [ "$(gh variable get "$name" --env production)" = "$(output "$key")" ] && echo "ok       $name" || echo "MISMATCH $name"
 done

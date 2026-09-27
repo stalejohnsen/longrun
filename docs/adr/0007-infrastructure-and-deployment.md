@@ -113,14 +113,11 @@ The owner uses the same pattern once, during the database bootstrap: a rule name
 
 These are short-lived changes outside Bicep. It is a **deliberate, documented exception** to `CLAUDE.md`'s "never change resources via ad-hoc CLI". They are scoped to single firewall rules named `ci-migration-<run id>` and `owner-bootstrap`. The alternative is private networking with a runner inside Azure; it was rejected for now on cost and complexity. Revisit it if the app handles sensitive data.
 
-### Staging verification through built-in auth
+### Staging verification (amended 2026-09-27)
 
-The staging slot's auth settings allow tokens from the pipeline identity (`allowedApplications`); production's do not. The pipeline requests a token for the staging app registration and calls `/health`. That proves auth, app and database work together before the swap.
+The pipeline has **no access to the app**. It verifies staging with the anonymous `/health`, which reports the build version and database reachability, and with the sign-in check on `/`. App Service also warms up `/health` before every swap and stops the swap unless it returns 200 (`WEBSITE_SWAP_WARMUP_PING_PATH`/`STATUSES`) ([staging slots](https://learn.microsoft.com/en-us/azure/app-service/deploy-staging-slots), [App Service team guide](https://azure.github.io/AppService/2020/05/15/Robust-Apps-for-the-cloud.html)).
 
-Risk: staging uses the production database, so this caller could in principle reach other routes. Mitigations:
-
-- the pipeline only calls `/health`;
-- spec 0001's server actions require a signed-in **user**, and app-only principals are rejected once features land (tracked in spec 0002).
+This replaces the first design, in which staging accepted the pipeline identity's token (ADR 0002 amendment).
 
 ### Database roles
 

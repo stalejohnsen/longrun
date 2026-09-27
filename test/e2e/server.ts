@@ -5,7 +5,6 @@ import { Kysely, PostgresDialect } from 'kysely'
 import { migrateToLatest } from '../../src/db/migrate.ts'
 import { createPool } from '../../src/db/pool.ts'
 import { databaseConfig, databaseEnv, startPostgres } from '../helpers/postgres.ts'
-import { E2E_AUTH_ENCRYPTION_KEY } from './constants.ts'
 
 const container = await startPostgres()
 
@@ -32,7 +31,6 @@ const server = spawn(process.execPath, ['.next/standalone/server.js'], {
     PATH: process.env.PATH ?? '',
     PORT: process.env.PORT ?? '3100',
     HOSTNAME: '127.0.0.1',
-    WEBSITE_AUTH_ENCRYPTION_KEY: E2E_AUTH_ENCRYPTION_KEY,
     LONGRUN_DEV_IDENTITY: 'false',
     ...databaseEnv(container),
   },

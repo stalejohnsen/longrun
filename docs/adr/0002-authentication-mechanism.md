@@ -92,7 +92,8 @@ Facts checked on 2026-09-26 (Microsoft Learn, npm registry):
 - **No client secret.** A user-assigned managed identity with a federated identity credential on the app registration (`OVERRIDE_USE_MI_FIC_ASSERTION_CLIENTID`, slot-sticky).
 - One app registration and one user-assigned identity per slot (production, staging), as Microsoft recommends.
 - Issuer URL on the v2.0 endpoint (`https://login.microsoftonline.com/<tenant-id>/v2.0`).
-- **Health endpoint:** not excluded by default, because the platform health check works with built-in auth. `/health` is added to `excludedPaths` only if we later need external uptime monitoring. `CLAUDE.md` allows this exception.
+- **Health endpoint:** anonymous, excluded from built-in auth (`excludedPaths: ['/health']`). See the amendment below. `CLAUDE.md` allows this exception.
+- **Only the slot's own app registration** is accepted (`allowedAudiences` and `allowedApplications` = its client ID). No other application, including the pipeline, can call the app.
 
 The app still defends itself. It does not assume the platform is configured correctly.
 
@@ -134,3 +135,18 @@ The app still defends itself. It does not assume the platform is configured corr
 
 - Verify the "built-in auth is enabled" signal and the exact header claim names in the skeleton task, with tests.
 - Test runner, database driver/query layer, migration tool, validation library ADRs.
+
+## Amendment 2026-09-27: anonymous `/health`, no application callers
+
+The first design kept `/health` behind built-in auth, accepted a platform health token in the app, and let the pipeline's identity call staging so it could verify the slot before a swap. That meant the app could receive **app-only identities** and would have had to tell them apart from users.
+
+That's not how this stack is normally run. The common, documented pattern is:
+
+- **`/health` is anonymous** (`excludedPaths`). The App Service team's guide says a warm-up path _"should be unauthenticated"_.
+- **The platform verifies the slot before every swap:** `WEBSITE_SWAP_WARMUP_PING_PATH=/health` and `WEBSITE_SWAP_WARMUP_PING_STATUSES=200`. _"If the returned status code isn't in the list, the warm-up and swap operations are stopped."_ ([staging slots](https://learn.microsoft.com/en-us/azure/app-service/deploy-staging-slots), [App Service team guide](https://azure.github.io/AppService/2020/05/15/Robust-Apps-for-the-cloud.html))
+- **The pipeline smoke-tests without an identity:** anonymous `/health`, which reports the build version, plus the sign-in check on `/`.
+
+Consequences:
+
+- The health-token code and the pipeline's `allowedApplications` entry are removed. Only the slot's own client ID can call the app, so no app-only identities reach it and no user-versus-app check is needed.
+- Anyone can call `/health`. It runs `select 1` and returns only `ok`/`unavailable` and the commit SHA.
