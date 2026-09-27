@@ -1,4 +1,4 @@
-import type { Kysely, Selectable } from 'kysely'
+import { sql, type Kysely, type Selectable } from 'kysely'
 import { z } from 'zod'
 import type { EndOfSupportWindow } from '../domain/end-of-support-window'
 import type { ComponentsTable, Database } from './database'
@@ -122,7 +122,8 @@ export async function updateComponent(
   if (!isId(id)) return undefined
   const row = await db
     .updateTable('components')
-    .set({ ...toColumns(data), updated_at: new Date() })
+    // Database clock, like created_at; mixing app and database clocks made updates look older.
+    .set({ ...toColumns(data), updated_at: sql<Date>`now()` })
     .where('id', '=', id)
     .returningAll()
     .executeTakeFirst()
