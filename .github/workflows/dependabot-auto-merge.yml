@@ -1,0 +1,36 @@
+name: Dependabot auto-merge
+
+# Spec 0003 merge policy: Dependabot's grouped minor and patch updates of dev dependencies and
+# GitHub Actions merge themselves once the ruleset's required checks pass. Everything else
+# (runtime dependencies, majors, security updates) waits for the owner. GitHub's documented
+# pattern: pull_request trigger, author check, dependabot/fetch-metadata, gh pr merge --auto.
+
+on: pull_request
+
+permissions: {}
+
+jobs:
+  auto-merge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'stalejohnsen/longrun'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # Outputs are only populated when every commit on the PR is Dependabot's own, so a PR
+      # with a pushed fix never auto-merges.
+      - name: Read Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Enable auto-merge for low-risk groups
+        if: >-
+          (steps.metadata.outputs.dependency-group == 'dev-dependencies' ||
+           steps.metadata.outputs.dependency-group == 'github-actions') &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+           steps.metadata.outputs.update-type == 'version-update:semver-patch')
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr merge --auto --merge "$PR_URL"

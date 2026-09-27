@@ -2,6 +2,8 @@
 
 Longrun tracks end of support for other systems. This file does the same for Longrun itself. Update it in the same PR that adds or upgrades a dependency. Check dates against the official source.
 
+Dependabot proposes npm and GitHub Actions updates (spec 0003). The versions held below (TypeScript 6.0.x, ESLint 9, `@types/node` 24) are ignored in `.github/dependabot.yml`; remove the `ignore` entry in the same PR that lifts the hold. Node.js, PostgreSQL and Bicep API versions are not visible to Dependabot and are checked in the monthly review.
+
 Last checked: 2026-09-26
 
 ## Runtime and platform
@@ -30,7 +32,7 @@ Last checked: 2026-09-26
 
 ## Test infrastructure
 
-| Component                                                  | Version                                | Notes                                                                                  |
-| ---------------------------------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------- |
-| Postgres image for tests                                   | `postgres:17-alpine`                   | Must match the Azure Flexible Server major version chosen in the infrastructure phase. |
-| GitHub Actions `checkout`, `setup-node`, `upload-artifact` | v7.0.1, v7.0.0, v7.0.1 (pinned by SHA) | Update SHAs deliberately.                                                              |
+| Component                                                                                                                   | Version                                                        | Notes                                                                                                                                                                            |
+| --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Postgres image for tests                                                                                                    | `postgres:17-alpine`                                           | Must match the Azure Flexible Server major version chosen in the infrastructure phase.                                                                                           |
+| GitHub Actions `checkout`, `setup-node`, `upload-artifact`, `download-artifact`, `azure/login`, `dependabot/fetch-metadata` | v7.0.1, v7.0.0, v7.0.1, v8.0.1, v3.1.0, v3.1.0 (pinned by SHA) | Dependabot updates SHA and version comment; minor and patch merge automatically (spec 0003). Only allow-listed third-party actions can run (`docs/runbooks/github-settings.md`). |
