@@ -43,7 +43,7 @@ export function createPool(
   if (password === undefined) {
     throw new Error('No database credential configured')
   }
-  return new pg.Pool({
+  const pool = new pg.Pool({
     host: database.host,
     port: database.port,
     database: database.name,
@@ -57,4 +57,19 @@ export function createPool(
     // Recycle connections before an Entra token (max 60 minutes) could expire.
     maxLifetimeSeconds: 30 * 60,
   })
+  // Idle clients emit errors through the pool when the database restarts or the network
+  // drops; without a listener Node treats it as uncaught and the process can crash
+  // (node-postgres Pool docs). The pool discards the client itself; we only log it, with the
+  // error name and SQLSTATE only, because messages can contain connection details.
+  pool.on('error', (error: Error & { code?: string }) => {
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        msg: 'idle database connection failed',
+        name: error.name,
+        code: error.code,
+      }),
+    )
+  })
+  return pool
 }
