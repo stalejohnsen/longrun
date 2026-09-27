@@ -67,6 +67,8 @@ Each phase is one or more small PRs. A phase with code starts with a spec in `sp
 
 ### Phase 2 – Infrastructure and deployment
 
+**Done 2026-09-27.** First production deploy: run 36308152554. The app reaches PostgreSQL over a private endpoint, and the database has no firewall rules.
+
 Spec [0002](../specs/0002-deployment.md), ADR [0007](adr/0007-infrastructure-and-deployment.md). Four PRs:
 
 1. ADR 0007 and spec 0002.
