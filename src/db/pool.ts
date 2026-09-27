@@ -7,6 +7,16 @@ export const POSTGRES_TOKEN_SCOPE = 'https://ossrdbms-aad.database.windows.net/.
 
 type PasswordProvider = () => Promise<string>
 
+// pg parses `date` into a JavaScript Date at local midnight, which shifts calendar dates in
+// non-UTC time zones (2026-03-01 became 2026-02-28T23:00Z in testing). Keep dates as
+// YYYY-MM-DD strings for this pool only; other types use pg's defaults.
+export const dateAsString: pg.CustomTypesConfig = {
+  getTypeParser: ((oid: number, format?: string) =>
+    oid === pg.types.builtins.DATE
+      ? (value: string) => value
+      : pg.types.getTypeParser(oid, format as 'text')) as pg.CustomTypesConfig['getTypeParser'],
+}
+
 // Tokens are valid for 5–60 minutes. pg calls the password function for every new
 // connection, and connections are recycled well before a token could expire.
 export function managedIdentityPassword(clientId: string): PasswordProvider {
@@ -40,6 +50,7 @@ export function createPool(
     user: database.user,
     password,
     ssl: database.ssl ? { rejectUnauthorized: true } : false,
+    types: dateAsString,
     max: 10,
     connectionTimeoutMillis: 5_000,
     idleTimeoutMillis: 30_000,

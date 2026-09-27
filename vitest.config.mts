@@ -17,7 +17,7 @@ export default defineConfig({
         'src/db/migrate.ts',
       ],
       // Thresholds only go up (CLAUDE.md, ADR 0003).
-      thresholds: { statements: 95, branches: 93, functions: 90, lines: 96 },
+      thresholds: { statements: 97, branches: 96, functions: 94, lines: 98 },
     },
     projects: [
       {
