@@ -40,7 +40,7 @@ rm "$file"
 "$dir/bin/node" --version
 ```
 
-The skills put `$HOME/.local/node24/bin` first on `PATH` before running npm or the metrics script. The guardrail hook runs with whatever `node` is on the default `PATH`, which is Node 22 in the cloud. That is why the hook command passes `--experimental-strip-types`, which Node 22.6 and later understand and Node 24 accepts.
+The monthly-review skill puts `$HOME/.local/node24/bin` first on `PATH` before running the metrics script. The triage routine runs no project code at all (spec 0004, "Trust boundary"): the session's GitHub proxy authenticates every request as you, including requests from code the session runs. The guardrail hook runs with whatever `node` is on the default `PATH`, which is Node 22 in the cloud. That is why the hook command passes `--experimental-strip-types`, which Node 22.6 and later understand and Node 24 accepts.
 
 ## 3. Verify the guardrails in the cloud (spec 0004 G4)
 
@@ -64,6 +64,8 @@ Report for each step exactly what happened, including any hook messages, word fo
 - `CLAUDE_CODE_REMOTE` is `true`, and Node 24 exists.
 - Steps 3–7 are blocked with `[guard-files]`, `[guard-secrets]`, `[guard-git]` and `[guard-github]` messages (or a permission denial for 6–7).
 - Step 8 works through the GitHub MCP tools. The `gh` CLI is **not** installed in cloud sessions, although the docs say it is (checked 2026-09-28).
+
+**Result 2026-09-28 (at `e7f662b`):** steps 3–5 were blocked by the hook, and the tools in steps 6–7 did not exist in the session, because `permissions.deny` removes them. Step 8 read a failed CI job's log. `gh` is not installed; the metrics script falls back to `curl`, which the proxy authenticates.
 
 **If any step 3–7 goes through, stop.** The guardrails do not hold in the cloud: do not create the routines, and record it in `docs/learnings.md` and ADR 0009.
 
