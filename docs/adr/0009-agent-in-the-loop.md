@@ -53,4 +53,5 @@ To keep as much as possible versioned and deterministic:
 - Routine configuration outside the repository is a gap in the audit trail. It is narrowed by thin prompts and the runbook, not closed.
 - Dependabot PRs cannot be fixed in place. A fix arrives as a separate `claude/` PR, and Dependabot closes its own PR once `main` has the update.
 - Runs count against the owner's subscription and the daily routine cap. Two routines (a daily triage and a monthly review) use about 32 runs a month.
+- _(Amended 2026-09-28)_ Cloud sessions also get GitHub MCP tools (`mcp__github__*`), which the first hook matcher did not cover. Among them are merging, enabling auto-merge, starting workflows (including the deploy, whose staging job needs no approval) and writing files through the API. Those tools are now denied by permission rules and by the hook (`guard-github`), so the owner stays the gate. The G4 check verified the hooks in the cloud for file edits and shell commands.
 - If routines prove too limited (no CI event triggers, no API access from the session), option (a) or (b) is the documented fallback. That needs a new ADR.

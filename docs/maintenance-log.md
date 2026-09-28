@@ -13,11 +13,13 @@ _None yet. Dependabot was enabled on 2026-09-27 (#35); its first runs found noth
 
 ## Findings from security tooling
 
-| Found      | Fixed      | Tool          | Finding                                                                                                                           | Severity              | Code changes by | Link |
-| ---------- | ---------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------- | --------------- | ---- |
-| 2026-09-27 | 2026-09-27 | Manual review | Deploy logs printed the database administrator's sign-in name, tenant and subscription IDs (environment variables are not masked) | Personal data in logs | agent           | #32  |
-| 2026-09-27 | 2026-09-27 | zizmor 1.30.1 | Dependabot cooldown shorter than 7 days (2 findings)                                                                              | Medium                | agent           | #36  |
-| 2026-09-27 | 2026-09-27 | zizmor 1.30.1 | Step outputs expanded with `${{ }}` inside `run:` in `deploy.yml` (4 findings)                                                    | Informational         | agent           | #36  |
+| Found      | Fixed      | Tool           | Finding                                                                                                                                              | Severity                                | Code changes by | Link    |
+| ---------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | --------------- | ------- |
+| 2026-09-27 | 2026-09-27 | Manual review  | Deploy logs printed the database administrator's sign-in name, tenant and subscription IDs (environment variables are not masked)                    | Personal data in logs                   | agent           | #32     |
+| 2026-09-27 | 2026-09-27 | zizmor 1.30.1  | Dependabot cooldown shorter than 7 days (2 findings)                                                                                                 | Medium                                  | agent           | #36     |
+| 2026-09-27 | 2026-09-27 | zizmor 1.30.1  | Step outputs expanded with `${{ }}` inside `run:` in `deploy.yml` (4 findings)                                                                       | Informational                           | agent           | #36     |
+| 2026-09-28 | 2026-09-28 | G4 cloud check | Claude cloud sessions get GitHub MCP tools (merge, auto-merge, trigger workflows, write files through the API) that the guardrail hook did not cover | High (the agent could merge its own PR) | agent           | this PR |
+| 2026-09-28 | 2026-09-28 | Manual review  | Code scanning ruleset rule for zizmor waited forever for results tied to a regenerated merge commit                                                  | Blocks merges                           | agent           | #41     |
 
 ## Monthly summaries
 
