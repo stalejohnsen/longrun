@@ -16,3 +16,4 @@ File name: `NNNN-short-title.md`. Status: `Proposed`, `Accepted`, `Superseded by
 | [0006](0006-lint-and-format.md)                     | Lint and format (ESLint 9 with Next.js presets, Prettier; TypeScript 6.0)                              | Accepted |
 | [0007](0007-infrastructure-and-deployment.md)       | Infrastructure layout and deployment (bootstrap + main Bicep, P0v3, B1ms, public access with firewall) | Accepted |
 | [0008](0008-dependency-updates-and-supply-chain.md) | Dependency updates and supply-chain security (Dependabot, public repository, zizmor, CodeQL)           | Accepted |
+| [0009](0009-agent-in-the-loop.md)                   | Agent in the maintenance loop (Claude routines, hooks as guardrails)                                   | Accepted |

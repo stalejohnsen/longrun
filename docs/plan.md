@@ -106,6 +106,16 @@ Spec [0003](../specs/0003-maintenance-and-supply-chain.md), ADR [0008](adr/0008-
 4. CI gates: `npm audit`, `npm audit signatures`, zizmor.
 5. Runbooks (security patch, major upgrade, monthly review) and the maintenance log.
 
+### Phase 7 – Agent governance and the closed loop
+
+Spec [0004](../specs/0004-agent-governance-and-closed-loop.md), ADR [0009](adr/0009-agent-in-the-loop.md). Guardrail hooks and skills, metrics, and scheduled Claude routines that triage failing Dependabot PRs and run the monthly review. The owner still merges and deploys. Five PRs:
+
+1. ADR 0009 and spec 0004.
+2. `.claude/settings.json`, hooks with tests, skills, a shorter `CLAUDE.md`.
+3. Metrics script and the September numbers.
+4. Routines runbook; the owner creates the routines.
+5. First month's review and learnings.
+
 ## Quality bar
 
 - Every acceptance criterion and error case in a spec has a test.
