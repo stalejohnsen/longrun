@@ -1,6 +1,6 @@
 # 0009 – Agent in the maintenance loop
 
-Status: Proposed
+Status: Accepted
 Date: 2026-09-28
 
 ## Context

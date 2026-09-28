@@ -1,6 +1,6 @@
 # Spec 0004 – Agent governance and the closed maintenance loop
 
-Status: Draft
+Status: Ready
 Date: 2026-09-28
 Related: [plan](../docs/plan.md) phase 7, ADR [0009](../docs/adr/0009-agent-in-the-loop.md), spec [0003](0003-maintenance-and-supply-chain.md), [AI-native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook)
 
