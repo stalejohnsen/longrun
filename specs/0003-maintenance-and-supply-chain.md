@@ -1,6 +1,6 @@
 # Spec 0003 – Maintenance and supply-chain security
 
-Status: Implemented (2026-09-27). Open: M7 is confirmed by the first real Dependabot PR; the ruleset must also include zizmor (github-settings runbook, section 4).
+Status: Implemented (2026-09-27). Open: M7 is confirmed by the first real Dependabot PR.
 Date: 2026-09-27
 Related: [plan](../docs/plan.md) phase 6, ADRs [0001](../docs/adr/0001-web-framework-and-rendering.md), [0006](../docs/adr/0006-lint-and-format.md), [0007](../docs/adr/0007-infrastructure-and-deployment.md), [0008](../docs/adr/0008-dependency-updates-and-supply-chain.md)
 
@@ -73,7 +73,7 @@ A vulnerability that cannot be fixed in time (no patched version, or blocked by 
 
 - `npm audit --omit=dev --audit-level=high` fails on high or critical vulnerabilities in runtime dependencies.
 - `npm audit signatures` fails on invalid registry signatures or attestations.
-- zizmor analyses `.github/workflows`. Findings appear in code scanning and fail the check.
+- zizmor analyses `.github/workflows`. Findings appear in code scanning, and the `zizmor` job fails on any finding; the ruleset requires that job (amended 2026-09-28, see `docs/learnings.md`).
 - CodeQL default setup covers JavaScript/TypeScript and Actions.
 
 ### Repository settings (owner-applied, runbook)

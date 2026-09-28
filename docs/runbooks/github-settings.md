@@ -74,7 +74,10 @@ Requirements for `main`:
 
 - a pull request, with 0 approvals, because a single owner cannot approve their own PR;
 - the CI checks `verify` and `infra` from GitHub Actions (integration 15368);
-- no new CodeQL alerts of high severity or above, and no zizmor findings of medium severity or above (spec 0003 M4).
+- the zizmor job, which fails on any finding (spec 0003 M4);
+- no new CodeQL alerts of high severity or above.
+
+zizmor gates through a status check, not the code scanning rule. Its SARIF upload is tied to the PR's temporary merge commit, which GitHub regenerates, so a code scanning rule for it can wait for results forever (`docs/learnings.md`).
 
 Force pushes and deletion are blocked. Nobody can bypass the ruleset.
 
@@ -107,7 +110,8 @@ cat > ruleset.json <<'JSON'
         "do_not_enforce_on_create": false,
         "required_status_checks": [
           { "context": "verify", "integration_id": 15368 },
-          { "context": "infra", "integration_id": 15368 }
+          { "context": "infra", "integration_id": 15368 },
+          { "context": "zizmor", "integration_id": 15368 }
         ]
       }
     },
@@ -115,8 +119,7 @@ cat > ruleset.json <<'JSON'
       "type": "code_scanning",
       "parameters": {
         "code_scanning_tools": [
-          { "tool": "CodeQL", "security_alerts_threshold": "high_or_higher", "alerts_threshold": "errors" },
-          { "tool": "zizmor", "security_alerts_threshold": "medium_or_higher", "alerts_threshold": "errors_and_warnings" }
+          { "tool": "CodeQL", "security_alerts_threshold": "high_or_higher", "alerts_threshold": "errors" }
         ]
       }
     }
