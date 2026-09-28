@@ -3,6 +3,7 @@ import {
   evaluate,
   guardFileTool,
   guardFilesInShell,
+  guardGitHubTool,
   guardGit,
   guardrailLabel,
   guardSecrets,
@@ -193,6 +194,47 @@ describe('guard-secrets (G3)', () => {
     'az account show',
   ])('allows %s', (command) => {
     expect(guardSecrets(command).deny).toBe(false)
+  })
+})
+
+describe('guard-github: GitHub MCP tools in cloud sessions (spec 0004)', () => {
+  it.each([
+    'merge_pull_request',
+    'enable_pr_auto_merge',
+    'disable_pr_auto_merge',
+    'actions_run_trigger',
+    'create_or_update_file',
+    'push_files',
+    'delete_file',
+    'update_pull_request',
+    'update_pull_request_branch',
+    'pull_request_review_write',
+    'create_repository',
+    'fork_repository',
+  ])('blocks mcp__github__%s', (tool) => {
+    const decision = evaluate({ tool_name: `mcp__github__${tool}`, tool_input: {} }, local)
+    expect(decision).toMatchObject({ deny: true, rule: 'guard-github' })
+    expect(decision.deny && decision.reason).toContain(tool)
+  })
+
+  it.each([
+    'get_job_logs',
+    'list_pull_requests',
+    'pull_request_read',
+    'actions_list',
+    'create_branch',
+    'create_pull_request',
+    'add_issue_comment',
+    'issue_write',
+  ])('allows mcp__github__%s', (tool) => {
+    expect(evaluate({ tool_name: `mcp__github__${tool}`, tool_input: {} }, cloud).deny).toBe(false)
+  })
+
+  it('matches GitHub servers with other names, and ignores other servers', () => {
+    expect(guardGitHubTool('mcp__claude_ai_GitHub__merge_pull_request').deny).toBe(true)
+    expect(guardGitHubTool('mcp__github-enterprise__merge_pull_request').deny).toBe(true)
+    expect(guardGitHubTool('mcp__slack__merge_pull_request').deny).toBe(false)
+    expect(guardGitHubTool('Bash').deny).toBe(false)
   })
 })
 

@@ -185,7 +185,41 @@ export type ToolCall = { tool_name: string; tool_input: Record<string, unknown> 
 
 const FILE_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit'])
 
+// --- GitHub MCP tools ----------------------------------------------------------------------
+
+// Cloud sessions and routines get GitHub MCP tools (mcp__github__*). These actions stay with
+// the owner (ADR 0009): merging, auto-merge, starting workflows (the deploy), writing files
+// through the API (bypasses guard-files), repository creation and reviews. Reading, branches,
+// pull requests and comments stay allowed. Mirrored by permissions.deny in .claude/settings.json.
+export const DENIED_GITHUB_TOOLS: Record<string, string> = {
+  merge_pull_request: 'merging is for the owner to decide',
+  enable_pr_auto_merge: 'auto-merge is configured by the owner only',
+  disable_pr_auto_merge: 'auto-merge is configured by the owner only',
+  actions_run_trigger:
+    'starting, re-running or cancelling workflows (such as the deploy) is for the owner to decide',
+  create_or_update_file:
+    'writing files through the API bypasses the guardrails; commit with git instead',
+  push_files: 'writing files through the API bypasses the guardrails; commit with git instead',
+  delete_file: 'deleting files through the API bypasses the guardrails',
+  update_pull_request:
+    'changing the state, base or branch of a pull request is for the owner to decide',
+  update_pull_request_branch: 'updating a pull request branch is for the owner to decide',
+  pull_request_review_write: 'reviews and approvals are for the owner',
+  create_repository: 'creating repositories is outside the task',
+  fork_repository: 'forking repositories is outside the task',
+}
+
+export function guardGitHubTool(toolName: string): Decision {
+  // mcp__<server>__<tool>; server names may contain single underscores.
+  const [prefix, server, ...rest] = toolName.split('__')
+  if (prefix !== 'mcp' || !server || !/github/i.test(server)) return ALLOW
+  const tool = rest.join('__')
+  const reason = DENIED_GITHUB_TOOLS[tool]
+  return reason === undefined ? ALLOW : deny('guard-github', `${tool}: ${reason}`)
+}
+
 export function evaluate(call: ToolCall, context: Context): Decision {
+  if (call.tool_name.startsWith('mcp__')) return guardGitHubTool(call.tool_name)
   if (FILE_TOOLS.has(call.tool_name)) {
     const path = call.tool_input.file_path ?? call.tool_input.notebook_path
     return typeof path === 'string' ? guardFileTool(path, context) : ALLOW
