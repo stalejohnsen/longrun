@@ -45,17 +45,17 @@ The file is committed, so it applies to every session that clones the repository
 - `test/**`;
 - `vitest.config.*`, `playwright.config.*`, `eslint.config.*`, `tsconfig*.json`;
 - `.github/**`;
-- `.npmrc`, `package.json` `engines`;
+- `.npmrc`, `package.json`, `package-lock.json` (dependency changes come from Dependabot or an owner-approved task);
 - `infra/bootstrap/**`;
 - `.claude/**`.
 
-**Hooks (PreToolUse).** Node scripts in `scripts/claude-hooks/`, each with Vitest tests. A blocked call gets a reason that names the rule.
+**Hooks (PreToolUse).** One Node entry script, `scripts/claude-hooks/pre-tool-use.ts`, calls the guards in `scripts/claude-hooks/guards.ts`; both are tested, and the guards are included in coverage. The hook fails closed on unreadable input. `ask` rules cannot prompt in a routine, so nothing a routine needs (such as `git push` to a `claude/` branch) is an `ask` rule; the hook handles `main`. A blocked call gets a reason that names the rule.
 
-| Hook            | Blocks                                                                                                                                                                                                              |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `guard-files`   | Edit, Write and delete of a guardrail file when the current branch starts with `claude/` (routine work). Locally the permission rule asks instead                                                                   |
-| `guard-git`     | `--no-verify`; `git push --force` or `-f`; `git reset --hard` or `git push` while on `main`; `git commit` on `main`                                                                                                 |
-| `guard-secrets` | Shell commands that print environment secrets or token files (`env`, `printenv`, `az account get-access-token`, `gh auth token`), except inside the documented migration step, which does not run in agent sessions |
+| Hook            | Blocks                                                                                                                                                                                                                                                           |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `guard-files`   | Edit, Write and delete of a guardrail file, through file tools or shell commands, in agent sessions: a `claude/` branch or a cloud session (`CLAUDE_CODE_REMOTE=true`). Locally the permission rules ask instead                                                 |
+| `guard-git`     | `--no-verify`; force push; pushing to `main`; `git commit`, `git push` or `git reset --hard` while on `main` (branch changes inside one command are followed)                                                                                                    |
+| `guard-secrets` | Printing the environment (`env`, `printenv`), tokens (`az account get-access-token`, `gh auth token`, `gh auth status --show-token`), secret variables (`echo $…TOKEN`) or `.env` files. The CI migration step is not an agent session and does not use the hook |
 
 ### Skills (`.claude/skills/`)
 
