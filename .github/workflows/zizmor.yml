@@ -27,8 +27,18 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run zizmor
+      # Findings in the Security tab (SARIF). Not a merge gate: SARIF is uploaded for the PR's
+      # temporary merge commit, which GitHub regenerates, so a code scanning ruleset rule can
+      # wait for results forever (docs/learnings.md).
+      - name: Run zizmor (report to code scanning)
         uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
         with:
           # Pinned, not "latest": the tool version moves only through a reviewed PR.
           version: 1.30.1
+
+      # The merge gate: this job fails on any finding, and the ruleset requires this check.
+      - name: Run zizmor (fail on findings)
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          version: 1.30.1
+          advanced-security: false
