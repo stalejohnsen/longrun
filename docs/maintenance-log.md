@@ -31,6 +31,20 @@ Spec 0003 delivered: #33 (ADR 0008, spec), #34 (GitHub settings), #35 (Dependabo
   - ESLint 9.39.5, latest 10.11.0. ESLint 9 is past end of life (2026-08-06), held because the `eslint-config-next` plugins support only ESLint 9. Dev-only.
   - TypeScript 6.0.3, latest 7.0.2. Held because `typescript-eslint` supports `<6.1.0`.
 - **What broke / what the agent fixed:** nothing broke. The agent fixed 7 findings (table above), all before merge.
+- **Metrics** (`node scripts/metrics.ts 2026-09`, first run 2026-09-28; the first-pass CI and rework numbers match an independent count):
+
+  | Metric                                          | Value                                                                                                                                    |
+  | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+  | PRs merged                                      | 41                                                                                                                                       |
+  | First-pass CI                                   | 97% (33 of 34; #1–#6 had no CI yet, #13 failed its first run)                                                                            |
+  | Rework (commits after the first CI run, per PR) | 0.18                                                                                                                                     |
+  | Median time, PR opened to merged                | 0.1 h                                                                                                                                    |
+  | Median time, merged to production               | 20.6 h. **Not representative:** 15 deploy runs were deleted before the repository went public (#32), so only 2 deploys remain in the API |
+  | Dependabot outcomes                             | no Dependabot PRs closed                                                                                                                 |
+  | Agent share of merged PRs                       | 0% (routines start in October)                                                                                                           |
+  | Change failure                                  | 0% (0 of 2 deploys)                                                                                                                      |
+  | Time to patch                                   | no alerts fixed                                                                                                                          |
+
 - **Coming up:**
   - Node 24 enters maintenance on 2026-10-20, and Node 26 becomes LTS on 2026-10-28. App Service lists `NODE:26` but not yet `NODE:26-lts` ([major-upgrade.md](runbooks/major-upgrade.md)).
   - Next.js 16 maintenance LTS ends 2027-10-21.

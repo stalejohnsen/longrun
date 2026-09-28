@@ -159,6 +159,16 @@ Each environment needs its identifiers as environment secrets. They are set from
 
 When you start the deploy workflow, the `staging` job runs straight away. The `production` job then waits on the run's page. Open the staging URL shown there, check the new version, then approve to swap, or reject to leave production untouched.
 
+## 5a. Labels
+
+Labels the agent routines and the metrics use (spec 0004): `agent` on every agent PR, `needs-owner` on a Dependabot PR the agent could not fix within the guardrails, and `production-fix` on a PR that fixes something that failed in production (change failure rate).
+
+```sh
+gh label create agent --repo "$REPO" --color 6f42c1 --description "Opened by a Claude routine (spec 0004)" --force
+gh label create needs-owner --repo "$REPO" --color d93f0b --description "The agent could not fix this within the guardrails" --force
+gh label create production-fix --repo "$REPO" --color b60205 --description "Fixes something that failed in production" --force
+```
+
 ## 6. Verify
 
 ```sh

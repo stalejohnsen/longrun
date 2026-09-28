@@ -21,6 +21,9 @@ gh run list -R $REPO --workflow deploy.yml --created ">=$SINCE" --json createdAt
 
 # Freshness
 npm outdated
+
+# Metrics table for the summary (spec 0004)
+node scripts/metrics.ts 2026-09
 ```
 
 ## 2. Check what Dependabot cannot see

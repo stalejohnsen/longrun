@@ -8,7 +8,7 @@ export default defineConfig({
     retry: 0,
     coverage: {
       provider: 'v8',
-      include: ['src/**', 'scripts/claude-hooks/**'],
+      include: ['src/**', 'scripts/claude-hooks/**', 'scripts/metrics/**'],
       exclude: [
         // Covered by end-to-end tests against the production build (ADR 0003).
         'src/app/**',
