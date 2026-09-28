@@ -66,18 +66,18 @@ Thin wrappers that point to the runbooks, so the agent picks them by itself and 
 
 ### Measurement (`scripts/metrics.ts`)
 
-- Node and the `gh` CLI only, no new dependencies. It reads PRs, checks, workflow runs and Dependabot alerts for one month.
+- Node, the `gh` CLI and Zod (already a dependency); no new dependencies. `scripts/metrics/collect.ts` reads PRs, CI runs, deploy runs and fixed Dependabot alerts through `gh api` and validates every response; `scripts/metrics/compute.ts` computes; `node scripts/metrics.ts <YYYY-MM>` prints the table.
 - It prints a Markdown table for the monthly summary:
 
-| Metric             | Definition                                                                                    |
-| ------------------ | --------------------------------------------------------------------------------------------- |
-| First-pass CI      | Share of merged PRs whose first CI run on the head commit was green                           |
-| Rework             | Commits pushed after the first CI run, per merged PR                                          |
-| Lead time          | PR opened to merged; merged to production (`/health` version in the deploy run)               |
-| Dependabot outcome | Share auto-merged, merged by the owner as proposed, fixed by the agent, or fixed by the owner |
-| Agent share        | Share of merged PRs with the `agent` label; agent fixes that later needed an owner fix        |
-| Change failure     | Deploys followed within 7 days by a rollback swap or a `fix:`/`revert` PR                     |
-| Time to patch      | Dependabot alert opened to fix in production, per severity                                    |
+| Metric             | Definition                                                                                                                                                                                                      |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| First-pass CI      | Share of merged PRs whose first CI run (first attempt) was green                                                                                                                                                |
+| Rework             | Commits pushed after the first CI run, per merged PR                                                                                                                                                            |
+| Lead time          | PR opened to merged; merged to production (`/health` version in the deploy run)                                                                                                                                 |
+| Dependabot outcome | Dependabot PRs closed in the month: auto-merged, merged by the owner as proposed, fixed by the owner on the branch, superseded by a merged `agent` PR that links it, or closed                                  |
+| Agent share        | Share of merged PRs with the `agent` label. Agent fixes that later needed an owner fix are noted by hand in the monthly summary                                                                                 |
+| Change failure     | Production deploys (a successful swap) followed within 7 days by a merged PR labelled `production-fix` or titled `Revert …`. Rollback swaps are not visible in GitHub; the monthly summary records them by hand |
+| Time to patch      | Dependabot alert opened to fix in production, per severity                                                                                                                                                      |
 
 ### Routine: `dependabot-triage` (daily, 07:07 local time)
 
