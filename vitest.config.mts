@@ -8,13 +8,15 @@ export default defineConfig({
     retry: 0,
     coverage: {
       provider: 'v8',
-      include: ['src/**'],
+      include: ['src/**', 'scripts/claude-hooks/**'],
       exclude: [
         // Covered by end-to-end tests against the production build (ADR 0003).
         'src/app/**',
         'src/instrumentation.ts',
         // Run as a child process with plain Node in test/db/migrate.int.test.ts, invisible to v8 coverage here.
         'src/db/migrate.ts',
+        // Hook entry point (stdin/stdout wiring): run as a child process in test/scripts/claude-hooks.
+        'scripts/claude-hooks/pre-tool-use.ts',
       ],
       // Thresholds only go up (CLAUDE.md, ADR 0003).
       thresholds: { statements: 97, branches: 96, functions: 94, lines: 98 },
