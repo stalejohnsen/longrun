@@ -16,7 +16,7 @@ Spec 0004, "Routine: dependabot-triage". You run without anyone watching. Guardr
    1. Read the failing job's log and the updated package's changelog or release notes.
    2. Create `claude/fix-<the Dependabot branch name, with / replaced by ->` from the Dependabot branch.
    3. Fix the application code (`src/`, `migrations/`, `infra/main/`, docs) so the checks pass with the new version. Keep the change small.
-   4. Run `npm ci`, `npm run lint`, `npm run typecheck` and `npm test`. Integration and end-to-end tests run in CI.
+   4. Run `npm ci`, `npm run lint`, `npm run typecheck` and `npm test`. Integration and end-to-end tests run in CI. In a cloud session, first run `export PATH="$HOME/.local/node24/bin:$PATH"` and check that `node --version` is 24.15 or later (the `longrun` environment installs it; `docs/runbooks/routines.md`). If it is not, stop and report.
    5. Commit with a message that states the cause and the fix, ending with the trailer `Agent: dependabot-triage`. Push the branch.
    6. Open a PR against `main` with the label `agent`, titled `Fix <package> <version> (Dependabot #<number>)`. The body links the Dependabot PR and explains the cause, the fix, what you ran and what CI must confirm.
    7. Comment on the Dependabot PR with a link to your PR.

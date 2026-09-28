@@ -8,8 +8,8 @@ description: Run Longrun's monthly maintenance review and open a PR with the mai
 Follow `docs/runbooks/monthly-review.md` for the month that just ended: collect, check what Dependabot cannot see, write it down.
 
 1. Work on a new branch `claude/monthly-review-<YYYY-MM>` from `main`.
-2. Add the output of `node scripts/metrics.ts <YYYY-MM>` to the month's summary, once the script exists (spec 0004).
-3. Check that the routines in `docs/runbooks/routines.md` still match claude.ai, once that runbook exists. If you cannot check it from this session, say so in the summary.
+2. Add the output of `node scripts/metrics.ts <YYYY-MM>` to the month's summary. In a cloud session, first run `export PATH="$HOME/.local/node24/bin:$PATH"` (Node 24 from the `longrun` environment; `docs/runbooks/routines.md`).
+3. You cannot see claude.ai settings from this session. Add the "Monthly check" list from `docs/runbooks/routines.md` to the PR description as an unchecked checklist for the owner.
 4. Open one PR titled `Monthly review <YYYY-MM>` with the label `agent`. End every commit message with the trailer `Agent: monthly-review`.
 
 Rules:
