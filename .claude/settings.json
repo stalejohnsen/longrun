@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PROJECT_DIR}/scripts/claude-hooks/pre-tool-use.ts\"",
+            "command": "node --experimental-strip-types \"${CLAUDE_PROJECT_DIR}/scripts/claude-hooks/pre-tool-use.ts\"",
             "timeout": 30
           }
         ]
