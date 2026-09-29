@@ -116,6 +116,10 @@ Spec [0004](../specs/0004-agent-governance-and-closed-loop.md), ADR [0009](adr/0
 4. Routines runbook; the owner creates the routines.
 5. First month's review and learnings.
 
+### Phase 8 – Lifecycle policies
+
+Intent [0005](../intents/0005-lifecycle-policies.md), spec [0005](../specs/0005-lifecycle-policies.md). The first feature through the full AI-native loop (intent, design with `org-design-rules`, build, test, deploy, maintain). Five PRs: spec; migration and evaluation; policies page; breaches page, list column and owner suggestions; deploy and dogfooding.
+
 ## Quality bar
 
 - Every acceptance criterion and error case in a spec has a test.
