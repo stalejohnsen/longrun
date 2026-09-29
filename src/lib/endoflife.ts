@@ -49,11 +49,11 @@ function unavailable(reason: FailureReason, status?: number): LookupResult {
   return { kind: 'unavailable' }
 }
 
-export async function lookUpEndOfLife(
-  product: string,
-  release: string,
-  options: LookupOptions,
-): Promise<LookupResult> {
+// v2 (drill B): one request object instead of positional arguments.
+export type LookupRequest = LookupOptions & { product: string; release: string }
+
+export async function lookUpEndOfLife(request: LookupRequest): Promise<LookupResult> {
+  const { product, release, ...options } = request
   // Spec 0001 E4: never send disallowed values anywhere.
   if (!PRODUCT.test(product) || !RELEASE.test(release)) {
     throw new InvalidLookupInput()

@@ -54,7 +54,7 @@ const nodejs24 = {
 describe('lookup outcomes', () => {
   test('AC2: found → the eolFrom date, requested at the documented path', async () => {
     handler = json(nodejs24)
-    expect(await lookUpEndOfLife('nodejs', '24', { baseUrl })).toEqual({
+    expect(await lookUpEndOfLife({ product: 'nodejs', release: '24', baseUrl })).toEqual({
       kind: 'found',
       date: '2028-04-30',
     })
@@ -63,19 +63,21 @@ describe('lookup outcomes', () => {
 
   test('product and release with dots, underscores and hyphens are sent as-is', async () => {
     handler = json({ result: { name: '24.04', eolFrom: '2029-05-31' } })
-    await lookUpEndOfLife('amazon-linux_2.x', '24.04', { baseUrl })
+    await lookUpEndOfLife({ product: 'amazon-linux_2.x', release: '24.04', baseUrl })
     expect(requests).toEqual(['/api/v1/products/amazon-linux_2.x/releases/24.04'])
   })
 
   test('a base URL with a path or trailing slash is joined correctly', async () => {
     handler = json(nodejs24)
-    await lookUpEndOfLife('nodejs', '24', { baseUrl: `${baseUrl}/` })
+    await lookUpEndOfLife({ product: 'nodejs', release: '24', baseUrl: `${baseUrl}/` })
     expect(requests).toEqual(['/api/v1/products/nodejs/releases/24'])
   })
 
   test('found, but eolFrom is null → no announced date', async () => {
     handler = json({ result: { name: '26', eolFrom: null, isEol: false } })
-    expect(await lookUpEndOfLife('nodejs', '26', { baseUrl })).toEqual({ kind: 'no-date' })
+    expect(await lookUpEndOfLife({ product: 'nodejs', release: '26', baseUrl })).toEqual({
+      kind: 'no-date',
+    })
   })
 
   test('E5: 404 (endoflife.date answers with HTML) → not found', async () => {
@@ -83,7 +85,9 @@ describe('lookup outcomes', () => {
       res.writeHead(404, { 'content-type': 'text/html' })
       res.end('<!DOCTYPE html><title>Page not Found</title>')
     }
-    expect(await lookUpEndOfLife('nodejs', '999', { baseUrl })).toEqual({ kind: 'not-found' })
+    expect(await lookUpEndOfLife({ product: 'nodejs', release: '999', baseUrl })).toEqual({
+      kind: 'not-found',
+    })
   })
 })
 
@@ -121,7 +125,9 @@ describe('E6: failures become "unavailable" and are logged without user input', 
   ])('%s', async (_case, stub) => {
     handler = stub
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    expect(await lookUpEndOfLife('secret-product', 'secret-release', { baseUrl })).toEqual({
+    expect(
+      await lookUpEndOfLife({ product: 'secret-product', release: 'secret-release', baseUrl }),
+    ).toEqual({
       kind: 'unavailable',
     })
     expect(warn).toHaveBeenCalledOnce()
@@ -137,7 +143,9 @@ describe('E6: failures become "unavailable" and are logged without user input', 
     }
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const started = Date.now()
-    expect(await lookUpEndOfLife('nodejs', '24', { baseUrl, timeoutMs: 100 })).toEqual({
+    expect(
+      await lookUpEndOfLife({ product: 'nodejs', release: '24', baseUrl, timeoutMs: 100 }),
+    ).toEqual({
       kind: 'unavailable',
     })
     expect(Date.now() - started).toBeLessThan(900)
@@ -151,7 +159,9 @@ describe('E6: failures become "unavailable" and are logged without user input', 
       // Never finishes the body.
     }
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    expect(await lookUpEndOfLife('nodejs', '24', { baseUrl, timeoutMs: 150 })).toEqual({
+    expect(
+      await lookUpEndOfLife({ product: 'nodejs', release: '24', baseUrl, timeoutMs: 150 }),
+    ).toEqual({
       kind: 'unavailable',
     })
     expect(JSON.parse(String(warn.mock.calls[0]?.[0]))).toMatchObject({ reason: 'timeout' })
@@ -163,7 +173,9 @@ describe('E6: failures become "unavailable" and are logged without user input', 
       res.end()
     }
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    expect(await lookUpEndOfLife('nodejs', '24', { baseUrl })).toEqual({ kind: 'unavailable' })
+    expect(await lookUpEndOfLife({ product: 'nodejs', release: '24', baseUrl })).toEqual({
+      kind: 'unavailable',
+    })
     expect(JSON.parse(String(warn.mock.calls[0]?.[0]))).toMatchObject({
       reason: 'invalid-response',
     })
@@ -171,7 +183,9 @@ describe('E6: failures become "unavailable" and are logged without user input', 
 
   test('a network error (nothing listening)', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    expect(await lookUpEndOfLife('nodejs', '24', { baseUrl: 'http://127.0.0.1:1' })).toEqual({
+    expect(
+      await lookUpEndOfLife({ product: 'nodejs', release: '24', baseUrl: 'http://127.0.0.1:1' }),
+    ).toEqual({
       kind: 'unavailable',
     })
     expect(JSON.parse(String(warn.mock.calls[0]?.[0]))).toMatchObject({ reason: 'network' })
@@ -180,7 +194,7 @@ describe('E6: failures become "unavailable" and are logged without user input', 
   test('uses a 5 second timeout by default', async () => {
     const timeout = vi.spyOn(AbortSignal, 'timeout')
     handler = json(nodejs24)
-    await lookUpEndOfLife('nodejs', '24', { baseUrl })
+    await lookUpEndOfLife({ product: 'nodejs', release: '24', baseUrl })
     expect(timeout).toHaveBeenCalledWith(5_000)
   })
 })
@@ -196,7 +210,9 @@ describe('E4: disallowed product or release', () => {
     ['', '24'],
     ['nodejs', 'x'.repeat(51)],
   ])('%j / %j is refused and no request is made', async (product, release) => {
-    await expect(lookUpEndOfLife(product, release, { baseUrl })).rejects.toThrow(InvalidLookupInput)
+    await expect(lookUpEndOfLife({ product: product, release: release, baseUrl })).rejects.toThrow(
+      InvalidLookupInput,
+    )
     expect(requests).toEqual([])
   })
 })
