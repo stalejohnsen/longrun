@@ -8,7 +8,8 @@ TypeScript on Node LTS · Next.js App Router, server-rendered first (ADR 0001) �
 
 ## Workflow
 
-- No code without a spec in `specs/`. If it is missing or unclear, stop and ask.
+- New work starts as an intent in `intents/` (the owner's words: what and why), then a spec in `specs/`. No code without a spec; if it is missing or unclear, stop and ask.
+- Apply the organisation design rules (`org-design-rules` skill, DR-01 to DR-21) while writing specs and while building UI or data. Specs cite the rules they rely on.
 - Start every task with a short plan: files, tests, risks. Wait for approval on anything touching infra, auth, security or dependencies.
 - One task per branch and PR; small diffs. Update docs, specs and ADRs in the same PR as the code.
 - When unsure, ask. Do not guess about Azure behaviour, library APIs or versions; check official docs.
@@ -21,7 +22,7 @@ TypeScript on Node LTS · Next.js App Router, server-rendered first (ADR 0001) �
 
 ## Layout
 
-`src/` app · `test/` mirrors `src/` · `migrations/` · `infra/` Bicep · `specs/` · `scripts/` (CI, migrations, Claude hooks) · `.claude/` (settings, hooks, skills) · `docs/adr/`, `docs/runbooks/`, `docs/lifecycle.md`, `docs/learnings.md`, `docs/maintenance-log.md`.
+`intents/` · `src/` app · `test/` mirrors `src/` · `migrations/` · `infra/` Bicep · `specs/` · `scripts/` (CI, migrations, Claude hooks) · `.claude/` (settings, hooks, skills) · `docs/adr/`, `docs/runbooks/`, `docs/lifecycle.md`, `docs/learnings.md`, `docs/maintenance-log.md`.
 
 ## Security (secure by default)
 

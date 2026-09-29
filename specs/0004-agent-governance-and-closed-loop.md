@@ -64,6 +64,7 @@ Thin wrappers that point to the runbooks, so the agent picks them by itself and 
 
 - `security-patch`, `major-upgrade`, `monthly-review`: the runbooks from spec 0003.
 - `dependabot-triage`: the routine behaviour below.
+- `org-design-rules`: the organisation's design rules (DR-01 to DR-21) for text, forms, data display, dates, accessibility, security and data. It is the "soft" governance next to the hooks: it shapes specs and code while they are written (playbook stage 2, "policy is applied while the spec is written"). Added 2026-09-29 together with `intents/` for stage 1.
 
 ### Measurement (`scripts/metrics.ts`)
 
