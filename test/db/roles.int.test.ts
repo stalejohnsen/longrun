@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs'
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import pg from 'pg'
+import type { Kysely } from 'kysely'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { createDb } from '../../src/db/client'
+import { migrateToLatest } from '../../src/db/migrate'
+import { createPool } from '../../src/db/pool'
 import { startPostgres } from '../helpers/postgres'
 
 // ADR 0004: the app role can read and write data but cannot change the schema.
@@ -46,6 +50,24 @@ beforeAll(async () => {
   } finally {
     await migrator.end()
   }
+
+  // The real migrations, run as the migrator as in CI (ADR 0004), so default privileges apply.
+  const migratorDb = createDb(
+    createPool({
+      host: container.getHost(),
+      port: container.getPort(),
+      name: 'longrun',
+      user: 'longrun_migrator',
+      password,
+      ssl: false,
+      managedIdentityClientId: undefined,
+    }),
+  )
+  try {
+    await migrateToLatest(migratorDb as unknown as Kysely<unknown>, 'migrations')
+  } finally {
+    await migratorDb.destroy()
+  }
 })
 
 afterAll(async () => {
@@ -64,6 +86,25 @@ describe.each(['longrun_app_production', 'longrun_app_staging'])('%s', (role) =>
       expect(result.rows).toEqual([{ value: role }])
       await app.query('update probe set value = $1 where value = $2', [`${role}-updated`, role])
       await app.query('delete from probe where value = $1', [`${role}-updated`])
+    } finally {
+      await app.end()
+    }
+  })
+
+  test('can read and write the spec 0005 policy tables (default privileges)', async () => {
+    const app = await connectAs(role)
+    try {
+      await app.query('update policy_settings set eos_warning_months = 12, updated_by = $1', [role])
+      await app.query(
+        "insert into technology_rules (product, rule, updated_by) values ($1, 'banned', $1)",
+        [`p-${role.replace('longrun_app_', '')}`],
+      )
+      await app.query('insert into teams (name, created_by) values ($1, $1)', [role])
+      const teams = await app.query<{ name: string }>('select name from teams where name = $1', [
+        role,
+      ])
+      expect(teams.rows).toEqual([{ name: role }])
+      await app.query('delete from teams where name = $1', [role])
     } finally {
       await app.end()
     }

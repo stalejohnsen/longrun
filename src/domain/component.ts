@@ -13,7 +13,7 @@ export const LIMITS = {
   eolRelease: 50,
 } as const
 
-function requiredText(max: number) {
+export function requiredText(max: number) {
   return z
     .string({ error: 'Enter a value.' })
     .trim()
@@ -22,7 +22,7 @@ function requiredText(max: number) {
 }
 
 // An empty or whitespace-only optional field means "not given".
-function optionalText(schema: z.ZodType<string, string>) {
+export function optionalText(schema: z.ZodType<string, string>) {
   return z
     .string({ error: 'Enter text.' })
     .trim()
@@ -31,7 +31,7 @@ function optionalText(schema: z.ZodType<string, string>) {
     .optional()
 }
 
-const eolProduct = z
+export const eolProduct = z
   .string()
   .max(LIMITS.eolProduct, { error: `Use at most ${LIMITS.eolProduct} characters.` })
   .regex(/^[a-z0-9._-]+$/, {

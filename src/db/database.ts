@@ -20,6 +20,38 @@ export interface ComponentsTable {
   updated_at: ColumnType<Date, never, Date>
 }
 
+// Spec 0005. One row (id = 1), seeded by the migration.
+export interface PolicySettingsTable {
+  id: ColumnType<number, never, never>
+  eos_warning_months: number
+  require_known_owner: boolean
+  require_end_of_support: boolean
+  updated_at: ColumnType<Date, never, Date>
+  updated_by: string | null
+}
+
+export type TechnologyRuleKind = 'approved' | 'banned'
+
+export interface TechnologyRulesTable {
+  id: Generated<string>
+  product: string
+  rule: TechnologyRuleKind
+  major_version: number | null
+  note: string | null
+  updated_at: ColumnType<Date, never, Date>
+  updated_by: string
+}
+
+export interface TeamsTable {
+  id: Generated<string>
+  name: string
+  created_at: ColumnType<Date, never, never>
+  created_by: string
+}
+
 export interface Database {
   components: ComponentsTable
+  policy_settings: PolicySettingsTable
+  technology_rules: TechnologyRulesTable
+  teams: TeamsTable
 }

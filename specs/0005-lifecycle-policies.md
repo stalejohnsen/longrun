@@ -1,6 +1,6 @@
 # Spec 0005 – Lifecycle policies
 
-Status: Draft
+Status: Ready
 Date: 2026-09-29
 Related: intent [0005](../intents/0005-lifecycle-policies.md), spec [0001](0001-component-register.md), [plan](../docs/plan.md) phase 8. Design rules: `org-design-rules` (cited as DR-nn).
 
