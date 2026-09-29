@@ -33,6 +33,8 @@ For each open PR from a `claude/fix-` branch with the label `agent`:
 
 ## Then: security alert deadlines
 
+The GitHub tools in a cloud session cannot list Dependabot alerts. Read them with `curl -fsS -H "Accept: application/vnd.github+json" "https://api.github.com/repos/stalejohnsen/longrun/dependabot/alerts?state=open&per_page=100"`; the session's GitHub proxy authenticates it, and curl runs no project code. If it fails, say so in your summary.
+
 List open Dependabot security alerts whose patch window (spec 0003: critical 7 days, high 30 days from when the alert opened) ends within 3 days. Post the list as a comment on the open issue titled `Maintenance status`, or create that issue if it does not exist. If there are none, post nothing.
 
 ## Rules
