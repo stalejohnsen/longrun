@@ -60,3 +60,11 @@ Spec 0003 delivered: #33 (ADR 0008, spec), #34 (GitHub settings), #35 (Dependabo
 - **Coming up:**
   - Node 24 enters maintenance on 2026-10-20, and Node 26 becomes LTS on 2026-10-28. App Service lists `NODE:26` but not yet `NODE:26-lts` ([major-upgrade.md](runbooks/major-upgrade.md)).
   - Next.js 16 maintenance LTS ends 2027-10-21.
+
+### September 2026 review (run 2026-10-01)
+
+- **Numbers:** 1 update PR (#48, auto-merged, already in the table above). Dependabot alerts: 0 (API list, all states). Open code scanning alerts: 0. Deploys in September: 2 runs of `deploy.yml` in the API, both successful (2026-09-27).
+- **Metrics:** `node scripts/metrics.ts 2026-09` **failed** in the cloud session: `gh api search/issues` returned HTTP 403 ("sessions are bound to their configured repositories"). No metrics were estimated. The baseline table above (first run 2026-09-28) is the only September metrics record. Follow-up for the owner: make the script work through repository-scoped endpoints in cloud sessions (`scripts/` is outside this routine's remit).
+- **Freshness** (`npm outdated`, `npm audit`): 0 vulnerabilities. Behind: ESLint 9.39.5 (latest 10.11.0) and TypeScript 6.0.3 (latest 7.0.2), both held (ADR 0006); `@types/node` 24.19.0 (latest 26.6.3), held to match Node 24.
+- **Not checked in this run:** support dates of Node.js, PostgreSQL, Bicep API versions and zizmor, and the sources in `docs/lifecycle.md`. "Last checked" in `docs/lifecycle.md` is therefore unchanged (2026-09-29).
+- **Coming up** (from the baseline entry): Node 24 enters maintenance on 2026-10-20; Node 26 becomes LTS on 2026-10-28.
