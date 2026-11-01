@@ -9,6 +9,10 @@ Evidence for Longrun's main question: does an AI-generated codebase stay maintai
 | Opened | Merged | Deployed | Kind | What | Severity | Window | Code changes by | Link |
 | ------ | ------ | -------- | ---- | ---- | -------- | ------ | --------------- | ---- |
 
+| 2026-10-06 – 2026-10-30 | – | – | version | 11 Dependabot update PRs closed without merge, superseded by newer grouped PRs: #54–#63, #66, #68 (`next` 16.3.7, 16.3.8; dev- and runtime-dependencies groups; github-actions group) | – | – | none | #54–#63, #66, #68 |
+| 2026-10-19 – 2026-10-31 | – | – | version | 6 Dependabot PRs open, all with `verify` failing at "Audit runtime dependencies": dev-dependencies (9 updates), runtime-dependencies (7), github-actions (4), `vite` 8.3.1 → 8.3.4, `undici` 8.11.2 → 8.12.3, `next` 16.3.6 → 16.4.1 | – | – | none | #64, #69, #67, #65, #70, #71 |
+| 2026-10-16 – 2026-10-31 | – | – | security | 26 Dependabot alerts opened in October, 24 open and 2 auto-dismissed (#9 `braces`, #22 `undici`). By package: `next` 14 (GHSA-cjq9-62q9-8jv4 high; GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr critical; GHSA-p3m5-59mp-jv5r high; others medium or low), `vite` 6, `@vitest/mocker` 2, `undici` 2, `@azure/msal-node` 1 (GHSA-xcx6-jx8p-x3h5, high). None fixed by 2026-11-01 | critical (3 distinct), high (4), medium, low | not fixed | – | Alerts #1–#28 |
+
 | 2026-09-29 | 2026-09-29 | – (dev only) | version | `@playwright/test` 1.62.1 → 1.63.0, dev-dependencies group. Drill A: downgraded on purpose in #46 | – | – | none (auto-merged by `github-actions` 4 minutes after opening) | #48 |
 
 ## Findings from security tooling
@@ -60,3 +64,17 @@ Spec 0003 delivered: #33 (ADR 0008, spec), #34 (GitHub settings), #35 (Dependabo
 - **Coming up:**
   - Node 24 enters maintenance on 2026-10-20, and Node 26 becomes LTS on 2026-10-28. App Service lists `NODE:26` but not yet `NODE:26-lts` ([major-upgrade.md](runbooks/major-upgrade.md)).
   - Next.js 16 maintenance LTS ends 2027-10-21.
+
+### October 2026
+
+- **Numbers** (`node scripts/metrics.ts 2026-10`): 0 PRs merged, Dependabot outcomes closed: 11, no alerts fixed, no change failure data (no deploys). The deploy workflow had no runs in October (`gh run list` could not be used; the REST API listed none). The 2026-09 summary PR (#53) was still open on 2026-11-01.
+- **Security alerts:** 28 alerts numbered, 26 opened in October, 24 open. Earliest open alert: 2026-10-16 (`next`, high, patched in 16.3.8). Newest: 2026-10-31 (`next`, critical, patched in 16.4.1). Code scanning: 0 open alerts. Time to fix: none fixed.
+- **What broke:** since 2026-10-06 no Dependabot PR has merged. The 6 open ones fail the `verify` check in the step "Audit runtime dependencies" (run 41238005330 for #71; I did not read the audit output). The cause is not established here.
+- **Agent fixes:** none this month.
+- **Freshness** (`npm outdated`, 2026-11-01): behind latest: `@azure/identity` 4.13.3 → 4.14.0, `@playwright/test` 1.63.0 → 1.64.1, `@testcontainers/postgresql` 12.1.0 → 12.2.1, `kysely` 0.29.6 → 0.29.7, `next` 16.3.6 → 16.4.3, `pg` 8.23.0 → 8.23.1, `react`/`react-dom` 19.3.0 → 19.3.1, `vitest` and `@vitest/coverage-v8` 5.0.2 → 5.0.5, `zod` 4.6.5 → 4.6.7, `jsdom`, `prettier`, `@vitejs/plugin-react` patch releases. Held: `eslint` 9.39.5 (latest 10.13.0), `typescript` 6.0.3 (latest 7.0.2), `@types/node` 24.19.0 (latest 26.6.6).
+- **Not checked in this run:** Node.js and PostgreSQL support dates, Bicep API version warnings, the zizmor version and `peer` dependencies for the held tools (no source reachable or reviewed in this session). `docs/lifecycle.md` "Last checked" is not advanced for those rows.
+- **Follow-ups for the owner:**
+  - Open `next` alerts rated critical (patched in 16.4.1, PR #71) and no merged update since 2026-10-06: the production app is on `next` 16.3.6.
+  - Find why "Audit runtime dependencies" fails on all open Dependabot PRs, and whether `security-patch` should run.
+  - Merge or close the September summary PR #53.
+  - Node 24 entered maintenance on 2026-10-20; Node 26 became LTS on 2026-10-28 ([major-upgrade.md](runbooks/major-upgrade.md)).
